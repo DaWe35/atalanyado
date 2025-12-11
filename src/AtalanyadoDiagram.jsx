@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
 export default function AtalanyadoDiagram() {
@@ -6,6 +6,23 @@ export default function AtalanyadoDiagram() {
   const [jogviszony, setJogviszony] = useState('fofoglalkozu'); // fofoglalkozu, mellek, kiegeszito
   const [ev, setEv] = useState(2026); // 2025, 2026, 2027
   const [koltseg_hanyad, setKoltsegHanyad] = useState(45);
+  
+  // Elérhető költséghányadok év szerint
+  const getKoltsegHanyadok = (ev) => {
+    const evSzerinti = ev === 2025 ? 40 : (ev === 2026 ? 45 : 50);
+    return [evSzerinti, 80, 90];
+  };
+  
+  // Amikor az év változik, ellenőrizzük, hogy a jelenlegi költséghányad elérhető-e
+  useEffect(() => {
+    const elerhetoKoltsegHanyadok = getKoltsegHanyadok(ev);
+    if (!elerhetoKoltsegHanyadok.includes(koltseg_hanyad)) {
+      // Ha nem elérhető, állítsuk be az adott év alapértelmezett értékét
+      const evSzerinti = ev === 2025 ? 40 : (ev === 2026 ? 45 : 50);
+      setKoltsegHanyad(evSzerinti);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ev]);
   const [minimalber_tipus, setMinimalberTipus] = useState('minimalber'); // minimalber, berminimum
   const [indulasHonap, setIndulasHonap] = useState(1); // 1-12
   const [hipaKulcs, setHipaKulcs] = useState(2);
@@ -218,11 +235,11 @@ export default function AtalanyadoDiagram() {
             onChange={(e) => setKoltsegHanyad(Number(e.target.value))}
             className="w-full p-1.5 text-sm border border-green-300 rounded bg-white"
           >
-            <option value={40}>40%</option>
-            <option value={45}>45%</option>
-            <option value={50}>50%</option>
-            <option value={80}>80% (szolg.)</option>
-            <option value={90}>90% (kisker.)</option>
+            {getKoltsegHanyadok(ev).map((hanyad) => (
+              <option key={hanyad} value={hanyad}>
+                {hanyad === 80 ? '80% (szolg.)' : hanyad === 90 ? '90% (kisker.)' : `${hanyad}%`}
+              </option>
+            ))}
           </select>
         </div>
 

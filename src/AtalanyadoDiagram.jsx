@@ -1,11 +1,24 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
 export default function AtalanyadoDiagram() {
+  // Jelenlegi év meghatározása (2025, 2026, 2027 közül)
+  const getJelenlegiEv = () => {
+    const aktualisEv = new Date().getFullYear();
+    if (aktualisEv >= 2025 && aktualisEv <= 2027) {
+      return aktualisEv;
+    }
+    // Ha nem 2025-2027 között van, akkor a legközelebbi évet használjuk
+    return aktualisEv < 2025 ? 2025 : 2027;
+  };
+  
+  const jelenlegiEv = getJelenlegiEv();
+  const jelenlegiEvKoltsegHanyad = jelenlegiEv === 2025 ? 40 : (jelenlegiEv === 2026 ? 45 : 50);
+  
   const [eves_bevetel, setEvesBevetel] = useState(10000000);
   const [jogviszony, setJogviszony] = useState('fofoglalkozu'); // fofoglalkozu, mellek, kiegeszito
-  const [ev, setEv] = useState(2026); // 2025, 2026, 2027
-  const [koltseg_hanyad, setKoltsegHanyad] = useState(45);
+  const [ev, setEv] = useState(jelenlegiEv); // 2025, 2026, 2027
+  const [koltseg_hanyad, setKoltsegHanyad] = useState(jelenlegiEvKoltsegHanyad);
   
   // Elérhető költséghányadok év szerint
   const getKoltsegHanyadok = (ev) => {
@@ -27,7 +40,7 @@ export default function AtalanyadoDiagram() {
   const [indulasHonap, setIndulasHonap] = useState(1); // 1-12
   const [hipaKulcs, setHipaKulcs] = useState(2);
   
-  // Minimálbér és garantált bérminimum értékek évenként
+  // Minimálbér és garantált bérminimum értékek évenként (konstansok)
   const MINIMÁLBÉR_2025 = 290800;
   const MINIMÁLBÉR_2026 = 328600;
   const MINIMÁLBÉR_2027 = 374600;
@@ -37,139 +50,198 @@ export default function AtalanyadoDiagram() {
   const GARANTÁLT_BÉRMINIMUM_2026 = 394400; // 328600 * 1.2 ≈ 394320, kerekítve
   const GARANTÁLT_BÉRMINIMUM_2027 = 449500; // 374600 * 1.2 ≈ 449520, kerekítve
   
-  const MINIMÁLBÉR = ev === 2025 ? MINIMÁLBÉR_2025 : (ev === 2026 ? MINIMÁLBÉR_2026 : MINIMÁLBÉR_2027);
-  const GARANTÁLT_BÉRMINIMUM = ev === 2025 ? GARANTÁLT_BÉRMINIMUM_2025 : (ev === 2026 ? GARANTÁLT_BÉRMINIMUM_2026 : GARANTÁLT_BÉRMINIMUM_2027);
-  
-  const ÉVES_MINIMÁLBÉR = MINIMÁLBÉR * 12;
-  const ADÓMENTES_JÖVEDELEM = ÉVES_MINIMÁLBÉR / 2;
-  
-  // Bevételi limitek évenként
+  // Bevételi limitek évenként (konstansok)
   const MAX_BEVETEL_2025_40 = 34896000;
   const MAX_BEVETEL_2026_45 = 38736000;
   const MAX_BEVETEL_2027_50 = 38736000;
-  const MAX_BEVETEL_80 = ev === 2025 ? 34896000 : 38736000; // 80% költséghányad: 2025-ben 40%-os limit, 2026-tól 45%-os limit
   const MAX_BEVETEL_90 = 193680000;
   
+  // Évtől függő értékek
+  const MINIMÁLBÉR = useMemo(() => 
+    ev === 2025 ? MINIMÁLBÉR_2025 : (ev === 2026 ? MINIMÁLBÉR_2026 : MINIMÁLBÉR_2027),
+    [ev]
+  );
+  
+  const GARANTÁLT_BÉRMINIMUM = useMemo(() => 
+    ev === 2025 ? GARANTÁLT_BÉRMINIMUM_2025 : (ev === 2026 ? GARANTÁLT_BÉRMINIMUM_2026 : GARANTÁLT_BÉRMINIMUM_2027),
+    [ev]
+  );
+  
+  const ÉVES_MINIMÁLBÉR = useMemo(() => MINIMÁLBÉR * 12, [MINIMÁLBÉR]);
+  
+  const MAX_BEVETEL_80 = useMemo(() => 
+    ev === 2025 ? 34896000 : 38736000, // 80% költséghányad: 2025-ben 40%-os limit, 2026-tól 45%-os limit
+    [ev]
+  );
+  
   // Bevételi limit meghatározása év és költséghányad alapján
-  const MAX_BEVETEL = koltseg_hanyad === 90 ? MAX_BEVETEL_90 : 
-                      (koltseg_hanyad === 80 ? MAX_BEVETEL_80 :
-                      (koltseg_hanyad === 50 ? (ev >= 2027 ? MAX_BEVETEL_2027_50 : MAX_BEVETEL_2026_45) :
-                      (koltseg_hanyad === 45 ? (ev >= 2026 ? MAX_BEVETEL_2026_45 : MAX_BEVETEL_2025_40) :
-                      (koltseg_hanyad === 40 ? MAX_BEVETEL_2025_40 : MAX_BEVETEL_2026_45))));
+  const MAX_BEVETEL = useMemo(() => 
+    koltseg_hanyad === 90 ? MAX_BEVETEL_90 : 
+    (koltseg_hanyad === 80 ? MAX_BEVETEL_80 :
+    (koltseg_hanyad === 50 ? (ev >= 2027 ? MAX_BEVETEL_2027_50 : MAX_BEVETEL_2026_45) :
+    (koltseg_hanyad === 45 ? (ev >= 2026 ? MAX_BEVETEL_2026_45 : MAX_BEVETEL_2025_40) :
+    (koltseg_hanyad === 40 ? MAX_BEVETEL_2025_40 : MAX_BEVETEL_2026_45)))),
+    [koltseg_hanyad, ev, MAX_BEVETEL_80]
+  );
   
   // Napok számítása indulási hónaptól év végéig
-  const napokHonapban = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]; // nem szökőév
-  let mukodesiNapok = 0;
-  for (let i = indulasHonap - 1; i < 12; i++) {
-    mukodesiNapok += napokHonapban[i];
-  }
-  const osszeNap = 365;
-  const aranyositoTenyezo = mukodesiNapok / osszeNap;
+  const { mukodesiNapok, aranyositoTenyezo } = useMemo(() => {
+    const napokHonapban = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]; // nem szökőév
+    let napok = 0;
+    for (let i = indulasHonap - 1; i < 12; i++) {
+      napok += napokHonapban[i];
+    }
+    const osszeNap = 365;
+    const aranyosito = napok / osszeNap;
+    return { mukodesiNapok: napok, aranyositoTenyezo: aranyosito };
+  }, [indulasHonap]);
   
   // Arányosított bevételi limit
-  const aranyositott_limit = MAX_BEVETEL * aranyositoTenyezo;
+  const aranyositott_limit = useMemo(() => 
+    MAX_BEVETEL * aranyositoTenyezo,
+    [MAX_BEVETEL, aranyositoTenyezo]
+  );
+  
+  // SZJA mentes keret: éves minimálbér fele (nem arányosítjuk év közbeni indulás esetén sem)
+  const ADÓMENTES_JÖVEDELEM = useMemo(() => 
+    ÉVES_MINIMÁLBÉR / 2,
+    [ÉVES_MINIMÁLBÉR]
+  );
   
   // Költséghányad alapján jövedelem számítás
-  const KÖLTSÉGHÁNYAD = koltseg_hanyad / 100;
-  const jovedelem = eves_bevetel * (1 - KÖLTSÉGHÁNYAD);
+  const KÖLTSÉGHÁNYAD = useMemo(() => koltseg_hanyad / 100, [koltseg_hanyad]);
   
-  // Adómentes rész (nincs arányosítva)
-  const adokoteles_jovedelem = Math.max(0, jovedelem - ADÓMENTES_JÖVEDELEM);
+  const jovedelem = useMemo(() => 
+    eves_bevetel * (1 - KÖLTSÉGHÁNYAD),
+    [eves_bevetel, KÖLTSÉGHÁNYAD]
+  );
+  
+  // Adómentes rész (arányosítva)
+  const adokoteles_jovedelem = useMemo(() => 
+    Math.max(0, jovedelem - ADÓMENTES_JÖVEDELEM),
+    [jovedelem, ADÓMENTES_JÖVEDELEM]
+  );
   
   // SZJA: adóköteles jövedelem * 15%
-  const szja = adokoteles_jovedelem * 0.15;
+  const szja = useMemo(() => adokoteles_jovedelem * 0.15, [adokoteles_jovedelem]);
+  
+  // Alkalmazott minimálbér típusa
+  const alkalmazott_minimalber = useMemo(() => 
+    minimalber_tipus === 'berminimum' ? GARANTÁLT_BÉRMINIMUM : MINIMÁLBÉR,
+    [minimalber_tipus, GARANTÁLT_BÉRMINIMUM, MINIMÁLBÉR]
+  );
   
   // Járulékok számítása jogviszony alapján
-  let tb_jarulék = 0;
-  let szocho = 0;
-  
-  const alkalmazott_minimalber = minimalber_tipus === 'berminimum' ? GARANTÁLT_BÉRMINIMUM : MINIMÁLBÉR;
-  
-  if (jogviszony === 'fofoglalkozu') {
-    // Főfoglalkozású: minimum járulék kötelező
-    const havi_min_tb_alap = alkalmazott_minimalber;
-    const havi_min_szocho_alap = alkalmazott_minimalber; // 2026-tól megszűnt a 112,5%-os szorzó!
-    
-    const tb_alap_osszesen = Math.max(adokoteles_jovedelem, havi_min_tb_alap * 12 * aranyositoTenyezo);
-    const szocho_alap_osszesen = Math.max(adokoteles_jovedelem, havi_min_szocho_alap * 12 * aranyositoTenyezo);
-    
-    tb_jarulék = tb_alap_osszesen * 0.185;
-    szocho = szocho_alap_osszesen * 0.13;
-  } else if (jogviszony === 'mellek') {
-    // Mellékfoglalkozású: nincs minimum járulék
-    tb_jarulék = adokoteles_jovedelem * 0.07; // csak 7% nyugdíjjárulék
-    szocho = 0; // nincs SZOCHO
-  } else if (jogviszony === 'kiegeszito') {
-    // Kiegészítő tevékenység: opcionális járulékfizetés, most 0-val számolunk
-    tb_jarulék = 0;
-    szocho = 0;
-  }
-  
-  // HIPA számítás (egyszerűsített sávos módszer)
-  let hipa = 0;
-  if (eves_bevetel <= 12000000) {
-    hipa = 2500000 * (hipaKulcs / 100);
-  } else if (eves_bevetel <= 18000000) {
-    hipa = 6000000 * (hipaKulcs / 100);
-  } else if (eves_bevetel <= 25000000) {
-    hipa = 8500000 * (hipaKulcs / 100);
-  } else if (koltseg_hanyad === 90 && eves_bevetel <= 120000000) {
-    hipa = 8500000 * (hipaKulcs / 100);
-  } else {
-    // Egyedi számítás szükséges 25M felett
-    const adoalap = eves_bevetel * 0.15; // egyszerűsített becslés
-    hipa = adoalap * (hipaKulcs / 100);
-  }
-  
-  // Összes adó és járulék
-  const osszes_ado = szja + tb_jarulék + szocho + hipa;
-  const ado_szazalek = (osszes_ado / eves_bevetel) * 100;
-
-  // Diagram adatok generálása
-  const diagramAdatok = [];
-  const step = MAX_BEVETEL > 50000000 ? 2000000 : 500000;
-  for (let bev = 1000000; bev <= aranyositott_limit; bev += step) {
-    const jov = bev * (1 - KÖLTSÉGHÁNYAD);
-    const adokot_jov = Math.max(0, jov - ADÓMENTES_JÖVEDELEM);
-    const szja_val = adokot_jov * 0.15;
-    
+  const { tb_jarulék, szocho } = useMemo(() => {
     let tb = 0;
     let szoc = 0;
-    
+  
     if (jogviszony === 'fofoglalkozu') {
-      const havi_min_tb = alkalmazott_minimalber;
-      const havi_min_szoc = alkalmazott_minimalber; // 2026-tól 100%
-      const tb_alap = Math.max(adokot_jov, havi_min_tb * 12 * aranyositoTenyezo);
-      const szoc_alap = Math.max(adokot_jov, havi_min_szoc * 12 * aranyositoTenyezo);
-      tb = tb_alap * 0.185;
-      szoc = szoc_alap * 0.13;
+      // Főfoglalkozású: minimum járulék kötelező
+      const havi_min_tb_alap = alkalmazott_minimalber;
+      // Szocho alap: 2025-ben 112,5%, 2026-tól 100%
+      const szocho_szorzo = ev === 2025 ? 1.125 : 1.0;
+      const havi_min_szocho_alap = alkalmazott_minimalber * szocho_szorzo;
+      
+      const tb_alap_osszesen = Math.max(adokoteles_jovedelem, havi_min_tb_alap * 12 * aranyositoTenyezo);
+      const szocho_alap_osszesen = Math.max(adokoteles_jovedelem, havi_min_szocho_alap * 12 * aranyositoTenyezo);
+      
+      tb = tb_alap_osszesen * 0.185;
+      szoc = szocho_alap_osszesen * 0.13;
     } else if (jogviszony === 'mellek') {
-      tb = adokot_jov * 0.07;
+      // Mellékfoglalkozású: kell TB és SZOCHO is, de nincs minimum
+      tb = adokoteles_jovedelem * 0.185; // 18,5% TB járulék
+      szoc = adokoteles_jovedelem * 0.13; // 13% SZOCHO
+    } else if (jogviszony === 'kiegeszito') {
+      // Kiegészítő tevékenység: opcionális járulékfizetés, most 0-val számolunk
+      tb = 0;
       szoc = 0;
     }
     
-    let hipa_val = 0;
-    if (bev <= 12000000) {
-      hipa_val = 2500000 * (hipaKulcs / 100);
-    } else if (bev <= 18000000) {
-      hipa_val = 6000000 * (hipaKulcs / 100);
-    } else if (bev <= 25000000) {
-      hipa_val = 8500000 * (hipaKulcs / 100);
-    } else if (koltseg_hanyad === 90 && bev <= 120000000) {
-      hipa_val = 8500000 * (hipaKulcs / 100);
+    return { tb_jarulék: tb, szocho: szoc };
+  }, [jogviszony, adokoteles_jovedelem, alkalmazott_minimalber, aranyositoTenyezo, ev]);
+  
+  // HIPA számítás (egyszerűsített sávos módszer)
+  const hipa = useMemo(() => {
+    if (eves_bevetel <= 12000000) {
+      return 2500000 * (hipaKulcs / 100);
+    } else if (eves_bevetel <= 18000000) {
+      return 6000000 * (hipaKulcs / 100);
+    } else if (eves_bevetel <= 25000000) {
+      return 8500000 * (hipaKulcs / 100);
+    } else if (koltseg_hanyad === 90 && eves_bevetel <= 120000000) {
+      return 8500000 * (hipaKulcs / 100);
     } else {
-      const adoalap_hipa = bev * 0.15;
-      hipa_val = adoalap_hipa * (hipaKulcs / 100);
+      // Normál szabályok szerint számítandó 25M felett: nettó árbevétel (jövedelem) alapján
+      const adoalap = jovedelem; // nettó árbevétel = jövedelem
+      return adoalap * (hipaKulcs / 100);
     }
-    
-    const ossz = szja_val + tb + szoc + hipa_val;
-    const szazalek = (ossz / bev) * 100;
-    
-    diagramAdatok.push({
-      bevetel: bev,
-      szazalek: parseFloat(szazalek.toFixed(2))
-    });
-  }
+  }, [eves_bevetel, koltseg_hanyad, hipaKulcs, jovedelem]);
+  
+  // Összes adó és járulék
+  const osszes_ado = useMemo(() => 
+    szja + tb_jarulék + szocho + hipa,
+    [szja, tb_jarulék, szocho, hipa]
+  );
+  
+  const ado_szazalek = useMemo(() => 
+    (osszes_ado / eves_bevetel) * 100,
+    [osszes_ado, eves_bevetel]
+  );
+
+  // Diagram adatok generálása
+  const diagramAdatok = useMemo(() => {
+    const adatok = [];
+    const step = MAX_BEVETEL > 50000000 ? 2000000 : 500000;
+    for (let bev = 2000000; bev <= aranyositott_limit; bev += step) {
+      const jov = bev * (1 - KÖLTSÉGHÁNYAD);
+      const adokot_jov = Math.max(0, jov - ADÓMENTES_JÖVEDELEM);
+      const szja_val = adokot_jov * 0.15;
+      
+      let tb = 0;
+      let szoc = 0;
+      
+      if (jogviszony === 'fofoglalkozu') {
+        const havi_min_tb = alkalmazott_minimalber;
+        // Szocho alap: 2025-ben 112,5%, 2026-tól 100%
+        const szocho_szorzo = ev === 2025 ? 1.125 : 1.0;
+        const havi_min_szoc = alkalmazott_minimalber * szocho_szorzo;
+        const tb_alap = Math.max(adokot_jov, havi_min_tb * 12 * aranyositoTenyezo);
+        const szoc_alap = Math.max(adokot_jov, havi_min_szoc * 12 * aranyositoTenyezo);
+        tb = tb_alap * 0.185;
+        szoc = szoc_alap * 0.13;
+      } else if (jogviszony === 'mellek') {
+        // Mellékfoglalkozású: kell TB és SZOCHO is, de nincs minimum
+        tb = adokot_jov * 0.185; // 18,5% TB járulék
+        szoc = adokot_jov * 0.13; // 13% SZOCHO
+      }
+      
+      let hipa_val = 0;
+      if (bev <= 12000000) {
+        hipa_val = 2500000 * (hipaKulcs / 100);
+      } else if (bev <= 18000000) {
+        hipa_val = 6000000 * (hipaKulcs / 100);
+      } else if (bev <= 25000000) {
+        hipa_val = 8500000 * (hipaKulcs / 100);
+      } else if (koltseg_hanyad === 90 && bev <= 120000000) {
+        hipa_val = 8500000 * (hipaKulcs / 100);
+      } else {
+        // Normál szabályok szerint számítandó 25M felett: nettó árbevétel (jövedelem) alapján
+        const jov = bev * (1 - KÖLTSÉGHÁNYAD); // jövedelem = nettó árbevétel
+        const adoalap_hipa = jov;
+        hipa_val = adoalap_hipa * (hipaKulcs / 100);
+      }
+      
+      const ossz = szja_val + tb + szoc + hipa_val;
+      const szazalek = (ossz / bev) * 100;
+      
+      adatok.push({
+        bevetel: bev,
+        szazalek: parseFloat(szazalek.toFixed(2))
+      });
+    }
+    return adatok;
+  }, [MAX_BEVETEL, aranyositott_limit, KÖLTSÉGHÁNYAD, ADÓMENTES_JÖVEDELEM, jogviszony, alkalmazott_minimalber, aranyositoTenyezo, hipaKulcs, koltseg_hanyad, ev]);
 
   const formatCurrency = (value) => {
     return new Intl.NumberFormat('hu-HU', {
@@ -192,8 +264,8 @@ export default function AtalanyadoDiagram() {
       <h1 className="text-3xl font-bold mb-2 text-gray-800">Átalányadó kalkulátor 2025-2027</h1>
       <p className="text-gray-600 mb-1">Részletes beállításokkal - naprakész számítás</p>
       <p className="text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded p-3 mb-6">
-        ⚠️ <strong>Figyelem:</strong> Ezt az oldalt nem ellenőrizte könyvelő. Az itt megjelenő adatok nem biztos, hogy helyesek. 
-        Professzionális kalkulátort találsz itt: <a href="https://ks.hu/atalanyado-kalkulator/" target="_blank" rel="noopener noreferrer" className="underline font-semibold">https://ks.hu/atalanyado-kalkulator/</a>
+        ⚠️ <strong>Figyelem:</strong> Ezt az oldalt nem ellenőrizte szakértő könyvelő. Az itt megjelenő adatok nem biztos, hogy helyesek. 
+        Professzionális kalkulátort itt találsz: <a href="https://ks.hu/atalanyado-kalkulator/" target="_blank" className="underline font-semibold">https://ks.hu/atalanyado-kalkulator/</a>
       </p>
 
       {/* Beállítások */}
@@ -322,7 +394,7 @@ export default function AtalanyadoDiagram() {
         </div>
         <input
           type="range"
-          min="1000000"
+          min="2000000"
           max={Math.min(aranyositott_limit, 50000000)}
           step="500000"
           value={Math.min(eves_bevetel, aranyositott_limit)}
@@ -342,7 +414,7 @@ export default function AtalanyadoDiagram() {
         </div>
         
         <div className="flex justify-between items-center p-2 bg-yellow-50 rounded border border-yellow-200">
-          <span className="text-xs text-gray-600">Adómentes rész</span>
+          <span className="text-xs text-gray-600">SZJA mentes jövedelem keret</span>
           <span className="text-lg font-bold text-yellow-700">{formatCurrency(ADÓMENTES_JÖVEDELEM)}</span>
         </div>
       </div>
@@ -403,7 +475,7 @@ export default function AtalanyadoDiagram() {
             />
             <YAxis 
               label={{ value: 'Adóteher (%)', angle: -90, position: 'insideLeft' }}
-              domain={[0, 50]}
+              domain={['dataMin', 'dataMax']}
             />
             <Tooltip 
               formatter={(value) => [`${value}%`, 'Adóteher']}
@@ -429,17 +501,15 @@ export default function AtalanyadoDiagram() {
           <ul className="ml-4 space-y-1 bg-blue-50 p-3 rounded border-l-4 border-blue-500">
             <li>• <strong>Minimálbér:</strong> {formatCurrency(MINIMÁLBÉR)}/hó</li>
             <li>• <strong>Garantált bérminimum:</strong> {formatCurrency(GARANTÁLT_BÉRMINIMUM)}/hó</li>
-            <li>• <strong>Adómentes keret:</strong> {formatCurrency(ADÓMENTES_JÖVEDELEM)} (minimálbér 50%-a)</li>
+            <li>• <strong>Adómentes keret:</strong> {formatCurrency(ADÓMENTES_JÖVEDELEM)} (éves minimálbér 50%-a, nem arányosítjuk év közbeni indulás esetén sem)</li>
             <li>• <strong>Bevételi limit ({koltseg_hanyad}%):</strong> {formatCurrency(MAX_BEVETEL)}/év</li>
-            {ev >= 2026 && (
-              <li>• <strong>SZOCHO minimum:</strong> 100% (2026-tól megszűnt a 112,5%-os szorzó)</li>
-            )}
+            <li>• <strong>SZOCHO minimum:</strong> {ev === 2025 ? '112,5%' : '100%'} ({ev === 2025 ? '2025-ben még 112,5%-os szorzó' : '2026-tól megszűnt a 112,5%-os szorzó'})</li>
           </ul>
           
           <p className="mt-4"><strong>Jogviszony típusok:</strong></p>
           <ul className="ml-4 space-y-1">
             <li>• <strong>Főfoglalkozású:</strong> Kötelező minimum TB (18,5%) és SZOCHO (13%){ev >= 2026 ? ' - 100%-on!' : ' - 112,5%-on (2025)'}</li>
-            <li>• <strong>Mellékfoglalkozású:</strong> Csak 7% nyugdíjjárulék, nincs SZOCHO és minimum</li>
+            <li>• <strong>Mellékfoglalkozású:</strong> TB (18,5%) és SZOCHO (13%), de nincs minimum</li>
             <li>• <strong>Kiegészítő:</strong> Opcionális járulékfizetés (itt 0-val számolva)</li>
           </ul>
           

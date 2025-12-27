@@ -42,18 +42,17 @@ export default function AtalanyadoDiagram() {
   
   // Minimálbér és garantált bérminimum értékek évenként (konstansok)
   const MINIMÁLBÉR_2025 = 290800;
-  const MINIMÁLBÉR_2026 = 328600;
-  const MINIMÁLBÉR_2027 = 374600;
+  const MINIMÁLBÉR_2026 = 322800;
+  const MINIMÁLBÉR_2027 = 374600; // nem végleges
   
   const GARANTÁLT_BÉRMINIMUM_2025 = 348800;
-  // 2026 és 2027: még nem végleges, de a tipikus arány alapján (~20% magasabb minimálbérnél)
-  const GARANTÁLT_BÉRMINIMUM_2026 = 394400; // 328600 * 1.2 ≈ 394320, kerekítve
-  const GARANTÁLT_BÉRMINIMUM_2027 = 449500; // 374600 * 1.2 ≈ 449520, kerekítve
+  const GARANTÁLT_BÉRMINIMUM_2026 = 373200;
+  const GARANTÁLT_BÉRMINIMUM_2027 = 449500; // nem végleges
   
   // Bevételi limitek évenként (konstansok)
   const MAX_BEVETEL_2025_40 = 34896000;
   const MAX_BEVETEL_2026_45 = 38736000;
-  const MAX_BEVETEL_2027_50 = 38736000;
+  const MAX_BEVETEL_2027_50 = 38736000; // nem végleges
   const MAX_BEVETEL_90 = 193680000;
   
   // Évtől függő értékek

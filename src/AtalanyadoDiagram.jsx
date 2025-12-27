@@ -265,11 +265,6 @@ export default function AtalanyadoDiagram() {
     <div className="w-full max-w-5xl mx-auto p-6 bg-white">
       <h1 className="text-3xl font-bold mb-2 text-gray-800">Átalányadó kalkulátor 2025-2027</h1>
       <p className="text-gray-600 mb-1">Részletes beállításokkal - naprakész számítás</p>
-      {ev === 2027 && (
-        <p className="text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded p-3 mb-6">
-          ⚠️ <strong>Figyelem:</strong> A 2027-es minimálbér nem végleges, ezért a számítások nem lehetnek pontosak.
-        </p>
-      )}
 
       {/* Beállítások */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 mb-4">
@@ -369,6 +364,12 @@ export default function AtalanyadoDiagram() {
         </div>
       </div>
 
+      {ev === 2027 && (
+        <p className="text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded p-3 mb-6">
+          ⚠️ <strong>Figyelem:</strong> A 2027-es minimálbér nem végleges, ezért a számítások nem lehetnek pontosak.
+        </p>
+      )}
+
       {/* Bevételi limit infó */}
       <div className="mb-4 p-2 bg-red-50 rounded border border-red-200 text-xs">
         <div className="flex justify-between items-center">
@@ -409,19 +410,6 @@ export default function AtalanyadoDiagram() {
         )}
       </div>
 
-      {/* Számítás részletei */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
-        <div className="flex justify-between items-center p-2 bg-green-50 rounded border border-green-200">
-          <span className="text-xs text-gray-600">Jövedelem ({100 - koltseg_hanyad}%)</span>
-          <span className="text-lg font-bold text-green-700">{formatCurrency(jovedelem)}</span>
-        </div>
-        
-        <div className="flex justify-between items-center p-2 bg-yellow-50 rounded border border-yellow-200">
-          <span className="text-xs text-gray-600">SZJA mentes jövedelem keret</span>
-          <span className="text-lg font-bold text-yellow-700">{formatCurrency(ADÓMENTES_JÖVEDELEM)}</span>
-        </div>
-      </div>
-
       {/* Adók és járulékok */}
       <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 mb-4">
         <div className="p-2 bg-orange-50 rounded border border-orange-200">
@@ -451,15 +439,27 @@ export default function AtalanyadoDiagram() {
       </div>
 
       {/* Összesítés */}
-      <div className="p-4 bg-red-50 rounded border-2 border-red-300 mb-6">
-        <div className="flex justify-between items-center">
-          <div>
-            <div className="text-sm text-gray-600 mb-0.5">Összes adó és járulék</div>
-            <div className="text-2xl font-bold text-red-700">{formatCurrency(osszes_ado)}</div>
-          </div>
-          <div className="text-right">
-            <div className="text-sm text-gray-600 mb-0.5">A bevétel %-ában</div>
-            <div className="text-3xl font-bold text-red-700">{ado_szazalek.toFixed(2)}%</div>
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+        <div className="p-4 bg-green-50 rounded border-2 border-green-200">
+          <div className="text-sm text-gray-600 mb-0.5">Jövedelem ({100 - koltseg_hanyad}%)</div>
+          <div className="text-2xl font-bold text-green-700">{formatCurrency(jovedelem)}</div>
+        </div>
+        
+        <div className="p-4 bg-yellow-50 rounded border-2 border-yellow-200">
+          <div className="text-sm text-gray-600 mb-0.5">SZJA mentes jövedelem keret</div>
+          <div className="text-2xl font-bold text-yellow-700">{formatCurrency(ADÓMENTES_JÖVEDELEM)}</div>
+        </div>
+
+        <div className="col-span-2 sm:col-span-2 p-4 bg-red-50 rounded border-2 border-red-300">
+          <div className="flex justify-between items-center">
+            <div>
+              <div className="text-sm text-gray-600 mb-0.5">Összes adó és járulék</div>
+              <div className="text-2xl font-bold text-red-700">{formatCurrency(osszes_ado)}</div>
+            </div>
+            <div className="text-right">
+              <div className="text-sm text-gray-600 mb-0.5">A bevétel %-ában</div>
+              <div className="text-3xl font-bold text-red-700">{ado_szazalek.toFixed(2)}%</div>
+            </div>
           </div>
         </div>
       </div>

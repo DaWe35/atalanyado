@@ -265,10 +265,11 @@ export default function AtalanyadoDiagram() {
     <div className="w-full max-w-5xl mx-auto p-6 bg-white">
       <h1 className="text-3xl font-bold mb-2 text-gray-800">Átalányadó kalkulátor 2025-2027</h1>
       <p className="text-gray-600 mb-1">Részletes beállításokkal - naprakész számítás</p>
-      <p className="text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded p-3 mb-6">
-        ⚠️ <strong>Figyelem:</strong> Ezt az oldalt nem ellenőrizte szakértő könyvelő. Az itt megjelenő adatok nem biztos, hogy helyesek. 
-        Professzionális kalkulátort itt találsz: <a href="https://ks.hu/atalanyado-kalkulator/" target="_blank" className="underline font-semibold">https://ks.hu/atalanyado-kalkulator/</a>
-      </p>
+      {ev === 2027 && (
+        <p className="text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded p-3 mb-6">
+          ⚠️ <strong>Figyelem:</strong> A 2027-es minimálbér nem végleges, ezért a számítások nem lehetnek pontosak.
+        </p>
+      )}
 
       {/* Beállítások */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 mb-4">

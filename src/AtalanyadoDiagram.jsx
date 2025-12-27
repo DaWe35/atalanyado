@@ -177,9 +177,12 @@ export default function AtalanyadoDiagram() {
     }
   }, [eves_bevetel, koltseg_hanyad, hipaKulcs, jovedelem]);
   
+  // Kamarai hozzájárulás: fix éves 5000 HUF
+  const KAMARAI_HOZZAJARULAS = 5000;
+  
   // Összes adó és járulék
   const osszes_ado = useMemo(() => 
-    szja + tb_jarulék + szocho + hipa,
+    szja + tb_jarulék + szocho + hipa + KAMARAI_HOZZAJARULAS,
     [szja, tb_jarulék, szocho, hipa]
   );
   
@@ -231,7 +234,7 @@ export default function AtalanyadoDiagram() {
         hipa_val = adoalap_hipa * (hipaKulcs / 100);
       }
       
-      const ossz = szja_val + tb + szoc + hipa_val;
+      const ossz = szja_val + tb + szoc + hipa_val + KAMARAI_HOZZAJARULAS;
       const szazalek = (ossz / bev) * 100;
       
       adatok.push({
@@ -419,7 +422,7 @@ export default function AtalanyadoDiagram() {
       </div>
 
       {/* Adók és járulékok */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-4">
+      <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 mb-4">
         <div className="p-2 bg-orange-50 rounded border border-orange-200">
           <div className="text-xs text-gray-600 mb-0.5">SZJA (15%)</div>
           <div className="text-sm font-bold text-orange-700">{formatCurrency(szja)}</div>
@@ -438,6 +441,11 @@ export default function AtalanyadoDiagram() {
         <div className="p-2 bg-indigo-50 rounded border border-indigo-200">
           <div className="text-xs text-gray-600 mb-0.5">HIPA ({hipaKulcs}%)</div>
           <div className="text-sm font-bold text-indigo-700">{formatCurrency(hipa)}</div>
+        </div>
+
+        <div className="p-2 bg-teal-50 rounded border border-teal-200">
+          <div className="text-xs text-gray-600 mb-0.5">Kamarai hozzájárulás</div>
+          <div className="text-sm font-bold text-teal-700">{formatCurrency(KAMARAI_HOZZAJARULAS)}</div>
         </div>
       </div>
 

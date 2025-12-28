@@ -303,7 +303,7 @@ export default function AtalanyadoDiagram() {
       else if (bev <= 25000000) egyszerusitett_hipa = 8500000 * (hipaKulcs / 100);
       else if (koltseg_hanyad === 90 && bev <= 120000000) egyszerusitett_hipa = 8500000 * (hipaKulcs / 100);
       
-      const hipa_val = Math.round(Math.min(egyszerusitett_hipa, jov * (hipaKulcs / 100)));
+      const hipa_val = Math.round(Math.min(egyszerusitett_hipa, bev * (hipaKulcs / 100)));
       
       const belfoldi_bev = Math.max(0, bev - kulfoldi_bev);
       const afa_val = belfoldi_bev > aranyositott_afa_limit ? Math.round((belfoldi_bev - aranyositott_afa_limit) * 0.27) : 0;

@@ -160,21 +160,31 @@ export default function AtalanyadoDiagram() {
     return { tb_jarulék: tb, szocho: szoc };
   }, [jogviszony, adokoteles_jovedelem, alkalmazott_minimalber, aranyositoTenyezo, ev]);
   
-  // HIPA számítás (egyszerűsített sávos módszer)
+  // HIPA számítás (egyszerűsített sávos módszer és normál módszer közül a kisebb)
   const hipa = useMemo(() => {
+    // Egyszerűsített sávos módszer
+    let egyszerusitett_hipa = 0;
     if (eves_bevetel <= 12000000) {
-      return 2500000 * (hipaKulcs / 100);
+      egyszerusitett_hipa = 2500000 * (hipaKulcs / 100);
     } else if (eves_bevetel <= 18000000) {
-      return 6000000 * (hipaKulcs / 100);
+      egyszerusitett_hipa = 6000000 * (hipaKulcs / 100);
     } else if (eves_bevetel <= 25000000) {
-      return 8500000 * (hipaKulcs / 100);
+      egyszerusitett_hipa = 8500000 * (hipaKulcs / 100);
     } else if (koltseg_hanyad === 90 && eves_bevetel <= 120000000) {
-      return 8500000 * (hipaKulcs / 100);
+      egyszerusitett_hipa = 8500000 * (hipaKulcs / 100);
     } else {
-      // Normál szabályok szerint számítandó 25M felett: nettó árbevétel (jövedelem) alapján
-      const adoalap = jovedelem; // nettó árbevétel = jövedelem
-      return adoalap * (hipaKulcs / 100);
+      // 25M felett (vagy 90% esetén 120M felett) az egyszerűsített nem alkalmazható
+      egyszerusitett_hipa = Infinity; // Nem alkalmazható, csak normál módszer
     }
+    
+    // Normál módszer: nettó árbevétel (jövedelem) alapján
+    const normal_hipa = jovedelem * (hipaKulcs / 100);
+    
+    // Válasszuk a kisebbet (ha az egyszerűsített alkalmazható)
+    if (egyszerusitett_hipa === Infinity) {
+      return normal_hipa;
+    }
+    return Math.min(egyszerusitett_hipa, normal_hipa);
   }, [eves_bevetel, koltseg_hanyad, hipaKulcs, jovedelem]);
   
   // Kamarai hozzájárulás: fix éves 5000 HUF
@@ -218,21 +228,28 @@ export default function AtalanyadoDiagram() {
         szoc = adokot_jov * 0.13; // 13% SZOCHO
       }
       
-      let hipa_val = 0;
+      // HIPA számítás: egyszerűsített és normál módszer közül a kisebb
+      let egyszerusitett_hipa = 0;
       if (bev <= 12000000) {
-        hipa_val = 2500000 * (hipaKulcs / 100);
+        egyszerusitett_hipa = 2500000 * (hipaKulcs / 100);
       } else if (bev <= 18000000) {
-        hipa_val = 6000000 * (hipaKulcs / 100);
+        egyszerusitett_hipa = 6000000 * (hipaKulcs / 100);
       } else if (bev <= 25000000) {
-        hipa_val = 8500000 * (hipaKulcs / 100);
+        egyszerusitett_hipa = 8500000 * (hipaKulcs / 100);
       } else if (koltseg_hanyad === 90 && bev <= 120000000) {
-        hipa_val = 8500000 * (hipaKulcs / 100);
+        egyszerusitett_hipa = 8500000 * (hipaKulcs / 100);
       } else {
-        // Normál szabályok szerint számítandó 25M felett: nettó árbevétel (jövedelem) alapján
-        const jov = bev * (1 - KÖLTSÉGHÁNYAD); // jövedelem = nettó árbevétel
-        const adoalap_hipa = jov;
-        hipa_val = adoalap_hipa * (hipaKulcs / 100);
+        // 25M felett (vagy 90% esetén 120M felett) az egyszerűsített nem alkalmazható
+        egyszerusitett_hipa = Infinity;
       }
+      
+      // Normál módszer: nettó árbevétel (jövedelem) alapján
+      const normal_hipa = jov * (hipaKulcs / 100);
+      
+      // Válasszuk a kisebbet (ha az egyszerűsített alkalmazható)
+      const hipa_val = egyszerusitett_hipa === Infinity 
+        ? normal_hipa 
+        : Math.min(egyszerusitett_hipa, normal_hipa);
       
       const ossz = szja_val + tb + szoc + hipa_val + KAMARAI_HOZZAJARULAS;
       const szazalek = (ossz / bev) * 100;

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ReferenceLine } from 'recharts';
 
 export default function AtalanyadoDiagram() {
   // Jelenlegi év meghatározása (2025, 2026, 2027 közül)
@@ -39,6 +39,7 @@ export default function AtalanyadoDiagram() {
   const [minimalber_tipus, setMinimalberTipus] = useState('minimalber'); // minimalber, berminimum
   const [indulasHonap, setIndulasHonap] = useState(1); // 1-12
   const [hipaKulcs, setHipaKulcs] = useState(2);
+  const [kulfoldi_bev_osszeg, setKulfoldiBevOsszeg] = useState(0);
   
   // Minimálbér és garantált bérminimum értékek évenként (konstansok)
   const MINIMÁLBÉR_2025 = 290800;
@@ -54,6 +55,11 @@ export default function AtalanyadoDiagram() {
   const MAX_BEVETEL_2026_45 = 38736000;
   const MAX_BEVETEL_2027_50 = 38736000; // nem végleges
   const MAX_BEVETEL_90 = 193680000;
+
+  // ÁFA alanyi adómentes keret évenként
+  const AFA_LIMIT_2025 = 18000000;
+  const AFA_LIMIT_2026 = 20000000;
+  const AFA_LIMIT_2027 = 22000000;
   
   // Évtől függő értékek
   const MINIMÁLBÉR = useMemo(() => 
@@ -100,6 +106,21 @@ export default function AtalanyadoDiagram() {
     MAX_BEVETEL * aranyositoTenyezo,
     [MAX_BEVETEL, aranyositoTenyezo]
   );
+
+  // Arányosított ÁFA limit
+  const aranyositott_afa_limit = useMemo(() => {
+    const limit = ev === 2025 ? AFA_LIMIT_2025 : (ev === 2026 ? AFA_LIMIT_2026 : AFA_LIMIT_2027);
+    return limit * aranyositoTenyezo;
+  }, [ev, aranyositoTenyezo]);
+
+  // ÁFA számítás (27% az arányosított limit feletti belföldi részre)
+  const afa = useMemo(() => {
+    const belfoldi_bevetel = Math.max(0, eves_bevetel - kulfoldi_bev_osszeg);
+    if (belfoldi_bevetel > aranyositott_afa_limit) {
+      return (belfoldi_bevetel - aranyositott_afa_limit) * 0.27;
+    }
+    return 0;
+  }, [eves_bevetel, aranyositott_afa_limit, kulfoldi_bev_osszeg]);
   
   // SZJA mentes keret: éves minimálbér fele (nem arányosítjuk év közbeni indulás esetén sem)
   const ADÓMENTES_JÖVEDELEM = useMemo(() => 
@@ -192,8 +213,8 @@ export default function AtalanyadoDiagram() {
   
   // Összes adó és járulék
   const osszes_ado = useMemo(() => 
-    szja + tb_jarulék + szocho + hipa + KAMARAI_HOZZAJARULAS,
-    [szja, tb_jarulék, szocho, hipa]
+    szja + tb_jarulék + szocho + hipa + KAMARAI_HOZZAJARULAS + afa,
+    [szja, tb_jarulék, szocho, hipa, afa]
   );
   
   const ado_szazalek = useMemo(() => 
@@ -251,7 +272,12 @@ export default function AtalanyadoDiagram() {
         ? normal_hipa 
         : Math.min(egyszerusitett_hipa, normal_hipa);
       
-      const ossz = szja_val + tb + szoc + hipa_val + KAMARAI_HOZZAJARULAS;
+      // ÁFA számítás a diagramban is (fix külföldi összeggel)
+      const diagram_afa_limit = (ev === 2025 ? AFA_LIMIT_2025 : (ev === 2026 ? AFA_LIMIT_2026 : AFA_LIMIT_2027)) * aranyositoTenyezo;
+      const belfoldi_bev = Math.max(0, bev - kulfoldi_bev_osszeg);
+      const afa_val = belfoldi_bev > diagram_afa_limit ? (belfoldi_bev - diagram_afa_limit) * 0.27 : 0;
+
+      const ossz = szja_val + tb + szoc + hipa_val + KAMARAI_HOZZAJARULAS + afa_val;
       const szazalek = (ossz / bev) * 100;
       
       adatok.push({
@@ -406,31 +432,87 @@ export default function AtalanyadoDiagram() {
       )}
 
       {/* Bevételi limit infó */}
-      <div className="mb-4 p-2 bg-red-50 rounded border border-red-200 text-xs">
-        <div className="flex justify-between items-center">
-          <span className="font-semibold text-gray-700">Bevételi limit:</span>
-          <span className="font-bold text-red-700">{formatCurrency(aranyositott_limit)}</span>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-4">
+        <div className="p-2 bg-red-50 rounded border border-red-200 text-xs">
+          <div className="flex justify-between items-center">
+            <span className="font-semibold text-gray-700">Átalányadó keret:</span>
+            <span className="font-bold text-red-700">{formatCurrency(aranyositott_limit)}</span>
+          </div>
+          <p className="text-gray-600 mt-0.5">
+            {mukodesiNapok} nap ({honapNevek[indulasHonap - 1]}–Dec) • Max: {formatCurrency(MAX_BEVETEL)}
+          </p>
         </div>
-        <p className="text-gray-600 mt-0.5">
-          {mukodesiNapok} nap ({honapNevek[indulasHonap - 1]}–Dec) • Max: {formatCurrency(MAX_BEVETEL)}
-        </p>
+        <div className="p-2 bg-pink-50 rounded border border-pink-200 text-xs">
+          <div className="flex justify-between items-center">
+            <span className="font-semibold text-gray-700">Alanyi áfa-mentes keret:</span>
+            <span className="font-bold text-pink-700"> {formatCurrency(aranyositott_afa_limit)}</span>
+          </div>
+          <p className="text-gray-600 mt-0.5">
+            {mukodesiNapok} nap ({honapNevek[indulasHonap - 1]}–Dec) • Max: {formatCurrency(ev === 2025 ? AFA_LIMIT_2025 : (ev === 2026 ? AFA_LIMIT_2026 : AFA_LIMIT_2027))}
+          </p>
+          {/* <p className="text-gray-600 mt-0.5">
+          Belföldi (ÁFA-számító) bevétel: {formatCurrency(Math.max(0, eves_bevetel - kulfoldi_bev_osszeg))}
+          </p> */}
+        </div>
       </div>
 
       {/* Bevétel beállítás */}
       <div className="mb-4 p-4 bg-blue-50 rounded">
-        <h2 className="text-lg font-semibold mb-2 text-gray-800">Éves bevétel</h2>
-        <div className="flex gap-3 items-center mb-2">
-          <input
-            type="number"
-            min="0"
-            max={aranyositott_limit}
-            step="100000"
-            value={eves_bevetel}
-            onChange={(e) => setEvesBevetel(Math.min(Number(e.target.value), aranyositott_limit))}
-            className="w-48 p-2 text-lg font-bold border-2 border-blue-300 rounded"
-          />
-          <span className="text-gray-600">Ft</span>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-3">
+          <div className="flex-1">
+            <h2 className="text-lg font-semibold mb-2 text-gray-800">Éves összes bevétel</h2>
+            <div className="flex gap-3 items-center">
+              <input
+                type="number"
+                min="0"
+                max={aranyositott_limit}
+                step="100000"
+                value={eves_bevetel}
+                onChange={(e) => setEvesBevetel(Math.min(Number(e.target.value), aranyositott_limit))}
+                className="w-48 p-2 text-lg font-bold border-2 border-blue-300 rounded"
+              />
+              <span className="text-gray-600">Ft</span>
+            </div>
+          </div>
+
+          {eves_bevetel > aranyositott_afa_limit && (
+            <div className="flex-1 p-3 bg-yellow-100 rounded border border-yellow-300 animate-in fade-in slide-in-from-top-2 duration-300">
+              <label className="block text-xs font-bold mb-1 text-yellow-800 uppercase tracking-wider">
+                Ebből külföldi (ÁFA-mentes) rész:
+              </label>
+              <div className="flex gap-2 items-center">
+                <div className="relative flex-1">
+                  <input 
+                    type="number"
+                    min="0"
+                    max={eves_bevetel}
+                    step="100000"
+                    value={kulfoldi_bev_osszeg}
+                    onChange={(e) => setKulfoldiBevOsszeg(Math.min(eves_bevetel, Number(e.target.value)))}
+                    className="w-full p-2 text-lg border-2 border-yellow-400 rounded bg-white font-bold text-yellow-700 focus:ring-2 focus:ring-yellow-500 focus:outline-none"
+                  />
+                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-yellow-600 font-bold">Ft</span>
+                </div>
+                <div className="bg-yellow-200 px-3 py-2 rounded font-bold text-yellow-800 text-lg min-w-[65px] text-center border-2 border-yellow-300">
+                  {eves_bevetel > 0 ? ((kulfoldi_bev_osszeg / eves_bevetel) * 100).toFixed(0) : 0}%
+                </div>
+              </div>
+              <input
+                type="range"
+                min="0"
+                max={eves_bevetel}
+                step="100000"
+                value={kulfoldi_bev_osszeg}
+                onChange={(e) => setKulfoldiBevOsszeg(Number(e.target.value))}
+                className="w-full h-1.5 bg-yellow-300 rounded-lg appearance-none cursor-pointer mt-3 accent-yellow-600"
+              />
+              <p className="text-[10px] text-yellow-700 mt-1 font-medium italic">
+                A külföldi/EU B2B rész nem számít az ÁFA keretbe!
+              </p>
+            </div>
+          )}
         </div>
+        
         <input
           type="range"
           min="2000000"
@@ -446,7 +528,7 @@ export default function AtalanyadoDiagram() {
       </div>
 
       {/* Adók és járulékok */}
-      <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 mb-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 mb-4">
         <div className="p-2 bg-orange-50 rounded border border-orange-200">
           <div className="text-xs text-gray-600 mb-0.5">SZJA (15%)</div>
           <div className="text-sm font-bold text-orange-700">{formatCurrency(szja)}</div>
@@ -470,6 +552,11 @@ export default function AtalanyadoDiagram() {
         <div className="p-2 bg-teal-50 rounded border border-teal-200">
           <div className="text-xs text-gray-600 mb-0.5">Kamarai hozzájárulás</div>
           <div className="text-sm font-bold text-teal-700">{formatCurrency(KAMARAI_HOZZAJARULAS)}</div>
+        </div>
+
+        <div className="p-2 bg-red-50 rounded border border-red-200">
+          <div className="text-xs text-gray-600 mb-0.5">ÁFA (27% limit felett)</div>
+          <div className="text-sm font-bold text-red-700">{formatCurrency(afa)}</div>
         </div>
       </div>
 
@@ -524,6 +611,23 @@ export default function AtalanyadoDiagram() {
               formatter={(value) => [`${value}%`, 'Adóteher']}
               labelFormatter={(value) => `Bevétel: ${formatCurrency(value)}`}
             />
+            {/* Aktuális bevétel jelzése */}
+            <ReferenceLine 
+              x={eves_bevetel} 
+              stroke="#2563eb" 
+              strokeWidth={2}
+              strokeDasharray="3 3"
+              label={{ value: 'Bevétel', position: 'insideBottomRight', fill: '#2563eb', fontSize: 12, fontWeight: 'bold', offset: 10 }} 
+            />
+            {/* ÁFA fordulópont jelzése */}
+            {aranyositott_afa_limit + kulfoldi_bev_osszeg < aranyositott_limit && (
+              <ReferenceLine 
+                x={aranyositott_afa_limit + kulfoldi_bev_osszeg} 
+                stroke="#ec4899" 
+                strokeDasharray="5 5"
+                label={{ value: 'ÁFA határ', position: 'top', fill: '#ec4899', fontSize: 10, fontWeight: 'bold' }} 
+              />
+            )}
             <Area 
               type="monotone" 
               dataKey="szazalek" 
@@ -545,6 +649,7 @@ export default function AtalanyadoDiagram() {
             <li>• <strong>Minimálbér:</strong> {formatCurrency(MINIMÁLBÉR)}/hó</li>
             <li>• <strong>Garantált bérminimum:</strong> {formatCurrency(GARANTÁLT_BÉRMINIMUM)}/hó</li>
             <li>• <strong>Adómentes keret:</strong> {formatCurrency(ADÓMENTES_JÖVEDELEM)} (éves minimálbér 50%-a, nem arányosítjuk év közbeni indulás esetén sem)</li>
+            <li>• <strong>ÁFA-mentes keret:</strong> {formatCurrency(ev === 2025 ? AFA_LIMIT_2025 : (ev === 2026 ? AFA_LIMIT_2026 : AFA_LIMIT_2027))} (arányosítva: {formatCurrency(aranyositott_afa_limit)})</li>
             <li>• <strong>Bevételi limit ({koltseg_hanyad}%):</strong> {formatCurrency(MAX_BEVETEL)}/év</li>
             <li>• <strong>SZOCHO minimum:</strong> {ev === 2025 ? '112,5%' : '100%'} ({ev === 2025 ? '2025-ben még 112,5%-os szorzó' : '2026-tól megszűnt a 112,5%-os szorzó'})</li>
           </ul>
@@ -567,10 +672,10 @@ export default function AtalanyadoDiagram() {
           
           <p className="mt-3"><strong>Bevételi korlátok évenként:</strong></p>
           <ul className="ml-4 space-y-1">
-            <li>• <strong>2025:</strong> 40% = 34 896 000 Ft/év, 80% = 34 896 000 Ft/év</li>
-            <li>• <strong>2026:</strong> 45% = 38 736 000 Ft/év, 80% = 38 736 000 Ft/év</li>
-            <li>• <strong>2027:</strong> 50% = 38 736 000 Ft/év, 80% = 38 736 000 Ft/év</li>
-            <li>• <strong>Minden év:</strong> 90% = 193 680 000 Ft/év</li>
+            <li>• <strong>2025:</strong> Átalányadó = 34 896 000 Ft, ÁFA-mentes = 18 000 000 Ft</li>
+            <li>• <strong>2026:</strong> Átalányadó = 38 736 000 Ft, ÁFA-mentes = 20 000 000 Ft</li>
+            <li>• <strong>2027:</strong> Átalányadó = 38 736 000 Ft, ÁFA-mentes = 22 000 000 Ft</li>
+            <li>• <strong>Minden év:</strong> 90% (kisker) átalányadó limit = 193 680 000 Ft</li>
             <li>• Év közben indulásnál napra arányosítva!</li>
           </ul>
           
@@ -579,6 +684,13 @@ export default function AtalanyadoDiagram() {
             <li>• Egyszerűsített sávos módszer alkalmazható 25M Ft-ig (kisker. 120M Ft-ig)</li>
             <li>• 0-12M: 50 000 Ft (2%), 12-18M: 120 000 Ft (2%), 18-25M: 170 000 Ft (2%)</li>
             <li>• Az adómérték településenként változhat (max. 2%)</li>
+          </ul>
+
+          <p className="mt-3"><strong>Közösségi (EU) és Külföldi értékesítés:</strong></p>
+          <ul className="ml-4 space-y-1 bg-yellow-50 p-3 rounded border-l-4 border-yellow-500">
+            <li>• <strong>B2B szolgáltatás:</strong> Ha EU-s vagy külföldi cégnek számlázol, általában <strong>fordított adózás</strong> történik (0% magyar ÁFA).</li>
+            <li>• <strong>ÁFA-mentes keret:</strong> Az export bevétel (ahol a teljesítés helye külföld) <strong>NEM számít bele</strong> az alanyi adómentes keretbe!</li>
+            <li>• <strong>Példa:</strong> Ha 30M Ft a bevételed, de ebből 15M Ft EU-s B2B szolgáltatás, akkor a belföldi 15M Ft még nem lépi át a 18M/20M Ft-os keretet, így minden számlád ÁFA-mentes marad.</li>
           </ul>
         </div>
         <br />

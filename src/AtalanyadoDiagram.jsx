@@ -169,20 +169,20 @@ export default function AtalanyadoDiagram() {
       const belfoldi_bev = Math.max(0, bev - kulfoldi_bev);
       osszes_belfoldi_bevetel_eddig += belfoldi_bev;
 
-      const n_tranzakcios_illetek = showHiddenCosts ? bev * 0.0045 : 0;
+      const n_tranzakcios_illetek = showHiddenCosts ? Math.round(bev * 0.0045) : 0;
       const n_konyvelo_koltseg = showHiddenCosts ? konyveloHaviDij * honapok : 0;
 
       // Göngyölített SZJA
       const adokot_jov_eddig = Math.max(0, osszes_jovedelem_eddig - ADÓMENTES_JÖVEDELEM);
       const szja_alap_negyedev = adokot_jov_eddig - elozo_szja_alap;
-      const szja_val = szja_alap_negyedev * 0.15;
+      const szja_val = Math.round(szja_alap_negyedev * 0.15);
       elozo_szja_alap = adokot_jov_eddig;
 
       // Göngyölített ÁFA
       const afa_ertek_eddig = osszes_belfoldi_bevetel_eddig > aranyositott_afa_limit 
         ? (osszes_belfoldi_bevetel_eddig - aranyositott_afa_limit) * 0.27 
         : 0;
-      const afa_val = afa_ertek_eddig - elozo_afa_ertek;
+      const afa_val = Math.round(afa_ertek_eddig - elozo_afa_ertek);
       elozo_afa_ertek = afa_ertek_eddig;
       
       let tb_val = 0;
@@ -202,8 +202,8 @@ export default function AtalanyadoDiagram() {
           tb_alap_negyedev = tb_alap_eddig - elozo_tb_alap;
           szoc_alap_negyedev = szoc_alap_eddig - elozo_szoc_alap;
           
-          tb_val = tb_alap_negyedev * 0.185;
-          szoc_val = szoc_alap_negyedev * 0.13;
+          tb_val = Math.round(tb_alap_negyedev * 0.185);
+          szoc_val = Math.round(szoc_alap_negyedev * 0.13);
           
           elozo_tb_alap = tb_alap_eddig;
           elozo_szoc_alap = szoc_alap_eddig;
@@ -211,8 +211,8 @@ export default function AtalanyadoDiagram() {
       } else if (jogviszony === 'mellek') {
         tb_alap_negyedev = szja_alap_negyedev;
         szoc_alap_negyedev = szja_alap_negyedev;
-        tb_val = tb_alap_negyedev * 0.185;
-        szoc_val = szoc_alap_negyedev * 0.13;
+        tb_val = Math.round(tb_alap_negyedev * 0.185);
+        szoc_val = Math.round(szoc_alap_negyedev * 0.13);
       }
       
       negyedek.push({
@@ -251,7 +251,7 @@ export default function AtalanyadoDiagram() {
     return (bev, kulfoldi_bev) => {
       const jov = bev * (1 - koltseg_hanyad / 100);
       const adokot_jov = Math.max(0, jov - ADÓMENTES_JÖVEDELEM);
-      const szja_val = adokot_jov * 0.15;
+      const szja_val = Math.round(adokot_jov * 0.15);
       
       let tb_val = 0;
       let szoc_val = 0;
@@ -262,11 +262,11 @@ export default function AtalanyadoDiagram() {
         const havi_min_szoc = alkalmazott_minimalber * szocho_szorzo;
         const tb_alap = Math.max(adokot_jov, havi_min_tb * 12 * aranyositoTenyezo);
         const szoc_alap = Math.max(adokot_jov, havi_min_szoc * 12 * aranyositoTenyezo);
-        tb_val = tb_alap * 0.185;
-        szoc_val = szoc_alap * 0.13;
+        tb_val = Math.round(tb_alap * 0.185);
+        szoc_val = Math.round(szoc_alap * 0.13);
       } else if (jogviszony === 'mellek') {
-        tb_val = adokot_jov * 0.185;
-        szoc_val = adokot_jov * 0.13;
+        tb_val = Math.round(adokot_jov * 0.185);
+        szoc_val = Math.round(adokot_jov * 0.13);
       }
       
       let egyszerusitett_hipa = Infinity;
@@ -275,12 +275,12 @@ export default function AtalanyadoDiagram() {
       else if (bev <= 25000000) egyszerusitett_hipa = 8500000 * (hipaKulcs / 100);
       else if (koltseg_hanyad === 90 && bev <= 120000000) egyszerusitett_hipa = 8500000 * (hipaKulcs / 100);
       
-      const hipa_val = Math.min(egyszerusitett_hipa, jov * (hipaKulcs / 100));
+      const hipa_val = Math.round(Math.min(egyszerusitett_hipa, jov * (hipaKulcs / 100)));
       
       const belfoldi_bev = Math.max(0, bev - kulfoldi_bev);
-      const afa_val = belfoldi_bev > aranyositott_afa_limit ? (belfoldi_bev - aranyositott_afa_limit) * 0.27 : 0;
+      const afa_val = belfoldi_bev > aranyositott_afa_limit ? Math.round((belfoldi_bev - aranyositott_afa_limit) * 0.27) : 0;
       
-      const tranzakcios_illetek = showHiddenCosts ? bev * 0.0045 : 0;
+      const tranzakcios_illetek = showHiddenCosts ? Math.round(bev * 0.0045) : 0;
       const activeMonths = 13 - indulasHonap;
       const konyvelo_koltseg = showHiddenCosts ? konyveloHaviDij * activeMonths : 0;
 

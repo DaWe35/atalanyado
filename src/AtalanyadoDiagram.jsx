@@ -60,6 +60,9 @@ export default function AtalanyadoDiagram() {
   const AFA_LIMIT_2025 = 18000000;
   const AFA_LIMIT_2026 = 20000000;
   const AFA_LIMIT_2027 = 22000000;
+
+  // Kamarai hozzájárulás: fix éves 5000 HUF
+  const KAMARAI_HOZZAJARULAS = 5000;
   
   // Évtől függő értékek
   const MINIMÁLBÉR = useMemo(() => 
@@ -73,6 +76,16 @@ export default function AtalanyadoDiagram() {
   );
   
   const ÉVES_MINIMÁLBÉR = useMemo(() => MINIMÁLBÉR * 12, [MINIMÁLBÉR]);
+  
+  const ADÓMENTES_JÖVEDELEM = useMemo(() => 
+    ÉVES_MINIMÁLBÉR / 2,
+    [ÉVES_MINIMÁLBÉR]
+  );
+  
+  const alkalmazott_minimalber = useMemo(() => 
+    minimalber_tipus === 'berminimum' ? GARANTÁLT_BÉRMINIMUM : MINIMÁLBÉR,
+    [minimalber_tipus, GARANTÁLT_BÉRMINIMUM, MINIMÁLBÉR]
+  );
   
   const MAX_BEVETEL_80 = useMemo(() => 
     ev === 2025 ? 34896000 : 38736000, // 80% költséghányad: 2025-ben 40%-os limit, 2026-tól 45%-os limit
@@ -113,180 +126,83 @@ export default function AtalanyadoDiagram() {
     return limit * aranyositoTenyezo;
   }, [ev, aranyositoTenyezo]);
 
-  // ÁFA számítás (27% az arányosított limit feletti belföldi részre)
-  const afa = useMemo(() => {
-    const belfoldi_bevetel = Math.max(0, eves_bevetel - kulfoldi_bev_osszeg);
-    if (belfoldi_bevetel > aranyositott_afa_limit) {
-      return (belfoldi_bevetel - aranyositott_afa_limit) * 0.27;
-    }
-    return 0;
-  }, [eves_bevetel, aranyositott_afa_limit, kulfoldi_bev_osszeg]);
-  
-  // SZJA mentes keret: éves minimálbér fele (nem arányosítjuk év közbeni indulás esetén sem)
-  const ADÓMENTES_JÖVEDELEM = useMemo(() => 
-    ÉVES_MINIMÁLBÉR / 2,
-    [ÉVES_MINIMÁLBÉR]
-  );
-  
-  // Költséghányad alapján jövedelem számítás
-  const KÖLTSÉGHÁNYAD = useMemo(() => koltseg_hanyad / 100, [koltseg_hanyad]);
-  
-  const jovedelem = useMemo(() => 
-    eves_bevetel * (1 - KÖLTSÉGHÁNYAD),
-    [eves_bevetel, KÖLTSÉGHÁNYAD]
-  );
-  
-  // Adómentes rész (arányosítva)
-  const adokoteles_jovedelem = useMemo(() => 
-    Math.max(0, jovedelem - ADÓMENTES_JÖVEDELEM),
-    [jovedelem, ADÓMENTES_JÖVEDELEM]
-  );
-  
-  // SZJA: adóköteles jövedelem * 15%
-  const szja = useMemo(() => adokoteles_jovedelem * 0.15, [adokoteles_jovedelem]);
-  
-  // Alkalmazott minimálbér típusa
-  const alkalmazott_minimalber = useMemo(() => 
-    minimalber_tipus === 'berminimum' ? GARANTÁLT_BÉRMINIMUM : MINIMÁLBÉR,
-    [minimalber_tipus, GARANTÁLT_BÉRMINIMUM, MINIMÁLBÉR]
-  );
-  
-  // Járulékok számítása jogviszony alapján
-  const { tb_jarulék, szocho } = useMemo(() => {
-    let tb = 0;
-    let szoc = 0;
-  
-    if (jogviszony === 'fofoglalkozu') {
-      // Főfoglalkozású: minimum járulék kötelező
-      const havi_min_tb_alap = alkalmazott_minimalber;
-      // Szocho alap: 2025-ben 112,5%, 2026-tól 100%
-      const szocho_szorzo = ev === 2025 ? 1.125 : 1.0;
-      const havi_min_szocho_alap = alkalmazott_minimalber * szocho_szorzo;
+  // Központi számítási logika (unifikálva)
+  const kalkulalAdokat = useMemo(() => {
+    return (bev, kulfoldi_bev) => {
+      const jov = bev * (1 - koltseg_hanyad / 100);
+      const adokot_jov = Math.max(0, jov - ADÓMENTES_JÖVEDELEM);
+      const szja_val = adokot_jov * 0.15;
       
-      const tb_alap_osszesen = Math.max(adokoteles_jovedelem, havi_min_tb_alap * 12 * aranyositoTenyezo);
-      const szocho_alap_osszesen = Math.max(adokoteles_jovedelem, havi_min_szocho_alap * 12 * aranyositoTenyezo);
+      let tb_val = 0;
+      let szoc_val = 0;
       
-      tb = tb_alap_osszesen * 0.185;
-      szoc = szocho_alap_osszesen * 0.13;
-    } else if (jogviszony === 'mellek') {
-      // Mellékfoglalkozású: kell TB és SZOCHO is, de nincs minimum
-      tb = adokoteles_jovedelem * 0.185; // 18,5% TB járulék
-      szoc = adokoteles_jovedelem * 0.13; // 13% SZOCHO
-    } else if (jogviszony === 'kiegeszito') {
-      // Kiegészítő tevékenység: opcionális járulékfizetés, most 0-val számolunk
-      tb = 0;
-      szoc = 0;
-    }
-    
-    return { tb_jarulék: tb, szocho: szoc };
-  }, [jogviszony, adokoteles_jovedelem, alkalmazott_minimalber, aranyositoTenyezo, ev]);
-  
-  // HIPA számítás (egyszerűsített sávos módszer és normál módszer közül a kisebb)
-  const hipa = useMemo(() => {
-    // Egyszerűsített sávos módszer
-    let egyszerusitett_hipa = 0;
-    if (eves_bevetel <= 12000000) {
-      egyszerusitett_hipa = 2500000 * (hipaKulcs / 100);
-    } else if (eves_bevetel <= 18000000) {
-      egyszerusitett_hipa = 6000000 * (hipaKulcs / 100);
-    } else if (eves_bevetel <= 25000000) {
-      egyszerusitett_hipa = 8500000 * (hipaKulcs / 100);
-    } else if (koltseg_hanyad === 90 && eves_bevetel <= 120000000) {
-      egyszerusitett_hipa = 8500000 * (hipaKulcs / 100);
-    } else {
-      // 25M felett (vagy 90% esetén 120M felett) az egyszerűsített nem alkalmazható
-      egyszerusitett_hipa = Infinity; // Nem alkalmazható, csak normál módszer
-    }
-    
-    // Normál módszer: nettó árbevétel (jövedelem) alapján
-    const normal_hipa = jovedelem * (hipaKulcs / 100);
-    
-    // Válasszuk a kisebbet (ha az egyszerűsített alkalmazható)
-    if (egyszerusitett_hipa === Infinity) {
-      return normal_hipa;
-    }
-    return Math.min(egyszerusitett_hipa, normal_hipa);
-  }, [eves_bevetel, koltseg_hanyad, hipaKulcs, jovedelem]);
-  
-  // Kamarai hozzájárulás: fix éves 5000 HUF
-  const KAMARAI_HOZZAJARULAS = 5000;
-  
-  // Összes adó és járulék
-  const osszes_ado = useMemo(() => 
-    szja + tb_jarulék + szocho + hipa + KAMARAI_HOZZAJARULAS + afa,
-    [szja, tb_jarulék, szocho, hipa, afa]
-  );
-  
-  const ado_szazalek = useMemo(() => 
-    (osszes_ado / eves_bevetel) * 100,
-    [osszes_ado, eves_bevetel]
-  );
+      if (jogviszony === 'fofoglalkozu') {
+        const havi_min_tb = alkalmazott_minimalber;
+        const szocho_szorzo = ev === 2025 ? 1.125 : 1.0;
+        const havi_min_szoc = alkalmazott_minimalber * szocho_szorzo;
+        const tb_alap = Math.max(adokot_jov, havi_min_tb * 12 * aranyositoTenyezo);
+        const szoc_alap = Math.max(adokot_jov, havi_min_szoc * 12 * aranyositoTenyezo);
+        tb_val = tb_alap * 0.185;
+        szoc_val = szoc_alap * 0.13;
+      } else if (jogviszony === 'mellek') {
+        tb_val = adokot_jov * 0.185;
+        szoc_val = adokot_jov * 0.13;
+      }
+      
+      let egyszerusitett_hipa = Infinity;
+      if (bev <= 12000000) egyszerusitett_hipa = 2500000 * (hipaKulcs / 100);
+      else if (bev <= 18000000) egyszerusitett_hipa = 6000000 * (hipaKulcs / 100);
+      else if (bev <= 25000000) egyszerusitett_hipa = 8500000 * (hipaKulcs / 100);
+      else if (koltseg_hanyad === 90 && bev <= 120000000) egyszerusitett_hipa = 8500000 * (hipaKulcs / 100);
+      
+      const hipa_val = Math.min(egyszerusitett_hipa, jov * (hipaKulcs / 100));
+      
+      const belfoldi_bev = Math.max(0, bev - kulfoldi_bev);
+      const afa_val = belfoldi_bev > aranyositott_afa_limit ? (belfoldi_bev - aranyositott_afa_limit) * 0.27 : 0;
+      
+      const ossz = szja_val + tb_val + szoc_val + hipa_val + KAMARAI_HOZZAJARULAS + afa_val;
+      
+      return {
+        jovedelem: jov,
+        szja: szja_val,
+        tb_jarulék: tb_val,
+        szocho: szoc_val,
+        hipa: hipa_val,
+        afa: afa_val,
+        osszes_ado: ossz,
+        ado_szazalek: bev > 0 ? (ossz / bev) * 100 : 0
+      };
+    };
+  }, [koltseg_hanyad, ADÓMENTES_JÖVEDELEM, jogviszony, alkalmazott_minimalber, ev, aranyositoTenyezo, hipaKulcs, aranyositott_afa_limit]);
+
+  // Jelenlegi adatok kiszámítása az aktuális bevételre
+  const aktualisAdok = useMemo(() => kalkulalAdokat(eves_bevetel, kulfoldi_bev_osszeg), [kalkulalAdokat, eves_bevetel, kulfoldi_bev_osszeg]);
+  const { jovedelem, szja, tb_jarulék, szocho, hipa, afa, osszes_ado, ado_szazalek } = aktualisAdok;
 
   // Diagram adatok generálása
   const diagramAdatok = useMemo(() => {
     const adatok = [];
     const step = MAX_BEVETEL > 50000000 ? 2000000 : 500000;
+    
     for (let bev = 2000000; bev <= aranyositott_limit; bev += step) {
-      const jov = bev * (1 - KÖLTSÉGHÁNYAD);
-      const adokot_jov = Math.max(0, jov - ADÓMENTES_JÖVEDELEM);
-      const szja_val = adokot_jov * 0.15;
-      
-      let tb = 0;
-      let szoc = 0;
-      
-      if (jogviszony === 'fofoglalkozu') {
-        const havi_min_tb = alkalmazott_minimalber;
-        // Szocho alap: 2025-ben 112,5%, 2026-tól 100%
-        const szocho_szorzo = ev === 2025 ? 1.125 : 1.0;
-        const havi_min_szoc = alkalmazott_minimalber * szocho_szorzo;
-        const tb_alap = Math.max(adokot_jov, havi_min_tb * 12 * aranyositoTenyezo);
-        const szoc_alap = Math.max(adokot_jov, havi_min_szoc * 12 * aranyositoTenyezo);
-        tb = tb_alap * 0.185;
-        szoc = szoc_alap * 0.13;
-      } else if (jogviszony === 'mellek') {
-        // Mellékfoglalkozású: kell TB és SZOCHO is, de nincs minimum
-        tb = adokot_jov * 0.185; // 18,5% TB járulék
-        szoc = adokot_jov * 0.13; // 13% SZOCHO
-      }
-      
-      // HIPA számítás: egyszerűsített és normál módszer közül a kisebb
-      let egyszerusitett_hipa = 0;
-      if (bev <= 12000000) {
-        egyszerusitett_hipa = 2500000 * (hipaKulcs / 100);
-      } else if (bev <= 18000000) {
-        egyszerusitett_hipa = 6000000 * (hipaKulcs / 100);
-      } else if (bev <= 25000000) {
-        egyszerusitett_hipa = 8500000 * (hipaKulcs / 100);
-      } else if (koltseg_hanyad === 90 && bev <= 120000000) {
-        egyszerusitett_hipa = 8500000 * (hipaKulcs / 100);
-      } else {
-        // 25M felett (vagy 90% esetén 120M felett) az egyszerűsített nem alkalmazható
-        egyszerusitett_hipa = Infinity;
-      }
-      
-      // Normál módszer: nettó árbevétel (jövedelem) alapján
-      const normal_hipa = jov * (hipaKulcs / 100);
-      
-      // Válasszuk a kisebbet (ha az egyszerűsített alkalmazható)
-      const hipa_val = egyszerusitett_hipa === Infinity 
-        ? normal_hipa 
-        : Math.min(egyszerusitett_hipa, normal_hipa);
-      
-      // ÁFA számítás a diagramban is (fix külföldi összeggel)
-      const diagram_afa_limit = (ev === 2025 ? AFA_LIMIT_2025 : (ev === 2026 ? AFA_LIMIT_2026 : AFA_LIMIT_2027)) * aranyositoTenyezo;
-      const belfoldi_bev = Math.max(0, bev - kulfoldi_bev_osszeg);
-      const afa_val = belfoldi_bev > diagram_afa_limit ? (belfoldi_bev - diagram_afa_limit) * 0.27 : 0;
-
-      const ossz = szja_val + tb + szoc + hipa_val + KAMARAI_HOZZAJARULAS + afa_val;
-      const szazalek = (ossz / bev) * 100;
-      
+      const res = kalkulalAdokat(bev, kulfoldi_bev_osszeg);
       adatok.push({
         bevetel: bev,
-        szazalek: parseFloat(szazalek.toFixed(2))
+        szazalek: parseFloat(res.ado_szazalek.toFixed(2))
       });
     }
+
+    // Biztosítsuk, hogy az utolsó pont (a pontos limit) is benne legyen a diagramon
+    if (adatok.length > 0 && adatok[adatok.length - 1].bevetel < aranyositott_limit) {
+      const res_utolso = kalkulalAdokat(aranyositott_limit, kulfoldi_bev_osszeg);
+      adatok.push({
+        bevetel: aranyositott_limit,
+        szazalek: parseFloat(res_utolso.ado_szazalek.toFixed(2))
+      });
+    }
+
     return adatok;
-  }, [MAX_BEVETEL, aranyositott_limit, KÖLTSÉGHÁNYAD, ADÓMENTES_JÖVEDELEM, jogviszony, alkalmazott_minimalber, aranyositoTenyezo, hipaKulcs, koltseg_hanyad, ev]);
+  }, [MAX_BEVETEL, aranyositott_limit, kalkulalAdokat, kulfoldi_bev_osszeg]);
 
   const formatCurrency = (value) => {
     return new Intl.NumberFormat('hu-HU', {
@@ -691,6 +607,11 @@ export default function AtalanyadoDiagram() {
             <li>• <strong>B2B szolgáltatás:</strong> Ha EU-s vagy külföldi cégnek számlázol, általában <strong>fordított adózás</strong> történik (0% magyar ÁFA).</li>
             <li>• <strong>ÁFA-mentes keret:</strong> Az export bevétel (ahol a teljesítés helye külföld) <strong>NEM számít bele</strong> az alanyi adómentes keretbe!</li>
             <li>• <strong>Példa:</strong> Ha 30M Ft a bevételed, de ebből 15M Ft EU-s B2B szolgáltatás, akkor a belföldi 15M Ft még nem lépi át a 18M/20M Ft-os keretet, így minden számlád ÁFA-mentes marad.</li>
+          </ul>
+
+          <p className="mt-3"><strong>Hogyan számol a kalkulátor az ÁFA-val?</strong></p>
+          <ul className="ml-4 space-y-1 bg-red-50 p-3 rounded border-l-4 border-red-500">
+            <li>• <strong>Számítás:</strong> Ha a belföldi bevételed átlépi a limitet, a rendszer a <strong>keret feletti belföldi részre</strong> számol 27% ÁFA-t adóteherként.</li>
           </ul>
         </div>
         <br />

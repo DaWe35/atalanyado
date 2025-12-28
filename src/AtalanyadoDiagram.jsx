@@ -36,10 +36,13 @@ export default function AtalanyadoDiagram() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ev]);
-  const [minimalber_tipus, setMinimalberTipus] = useState('minimalber'); // minimalber, berminimum
+  const [isSzakkepesitestIgenylo, setIsSzakkepesitestIgenylo] = useState(false);
   const [indulasHonap, setIndulasHonap] = useState(1); // 1-12
   const [hipaKulcs, setHipaKulcs] = useState(2);
   const [kulfoldi_bev_osszeg, setKulfoldiBevOsszeg] = useState(0);
+  const [isNegyedeves, setIsNegyedeves] = useState(false);
+  const [negyedevesBevetelek, setNegyedevesBevetelek] = useState([0, 0, 0, 0]);
+  const [negyedevesKulfoldiBevetelek, setNegyedevesKulfoldiBevetelek] = useState([0, 0, 0, 0]);
   
   // Minimálbér és garantált bérminimum értékek évenként (konstansok)
   const MINIMÁLBÉR_2025 = 290800;
@@ -83,8 +86,8 @@ export default function AtalanyadoDiagram() {
   );
   
   const alkalmazott_minimalber = useMemo(() => 
-    minimalber_tipus === 'berminimum' ? GARANTÁLT_BÉRMINIMUM : MINIMÁLBÉR,
-    [minimalber_tipus, GARANTÁLT_BÉRMINIMUM, MINIMÁLBÉR]
+    isSzakkepesitestIgenylo ? GARANTÁLT_BÉRMINIMUM : MINIMÁLBÉR,
+    [isSzakkepesitestIgenylo, GARANTÁLT_BÉRMINIMUM, MINIMÁLBÉR]
   );
   
   const MAX_BEVETEL_80 = useMemo(() => 
@@ -120,11 +123,119 @@ export default function AtalanyadoDiagram() {
     [MAX_BEVETEL, aranyositoTenyezo]
   );
 
-  // Arányosított ÁFA limit
   const aranyositott_afa_limit = useMemo(() => {
     const limit = ev === 2025 ? AFA_LIMIT_2025 : (ev === 2026 ? AFA_LIMIT_2026 : AFA_LIMIT_2027);
     return limit * aranyositoTenyezo;
   }, [ev, aranyositoTenyezo]);
+
+  // Hónapok száma negyedévenként az indulási hónap függvényében
+  const honapokNegyedenkent = useMemo(() => {
+    const negyedek = [0, 0, 0, 0];
+    for (let h = 1; h <= 12; h++) {
+      if (h >= indulasHonap) {
+        const nIdx = Math.floor((h - 1) / 3);
+        negyedek[nIdx]++;
+      }
+    }
+    return negyedek;
+  }, [indulasHonap]);
+
+  // Göngyölítéses számítás negyedévekre
+  const negyedevesSzamitas = useMemo(() => {
+    const costRatio = koltseg_hanyad / 100;
+    const szocho_szorzo = ev === 2025 ? 1.125 : 1.0;
+    
+    let osszes_jovedelem_eddig = 0;
+    let elozo_szja_alap = 0;
+    let elozo_tb_alap = 0;
+    let elozo_szoc_alap = 0;
+    let osszes_belfoldi_bevetel_eddig = 0;
+    let elozo_afa_ertek = 0;
+    
+    const negyedek = [];
+    
+    for (let i = 0; i < 4; i++) {
+      const bev = negyedevesBevetelek[i];
+      const kulfoldi_bev = negyedevesKulfoldiBevetelek[i];
+      const honapok = honapokNegyedenkent[i];
+      
+      const jov = bev * (1 - costRatio);
+      osszes_jovedelem_eddig += jov;
+      
+      const belfoldi_bev = Math.max(0, bev - kulfoldi_bev);
+      osszes_belfoldi_bevetel_eddig += belfoldi_bev;
+
+      // Göngyölített SZJA
+      const adokot_jov_eddig = Math.max(0, osszes_jovedelem_eddig - ADÓMENTES_JÖVEDELEM);
+      const szja_alap_negyedev = adokot_jov_eddig - elozo_szja_alap;
+      const szja_val = szja_alap_negyedev * 0.15;
+      elozo_szja_alap = adokot_jov_eddig;
+
+      // Göngyölített ÁFA
+      const afa_ertek_eddig = osszes_belfoldi_bevetel_eddig > aranyositott_afa_limit 
+        ? (osszes_belfoldi_bevetel_eddig - aranyositott_afa_limit) * 0.27 
+        : 0;
+      const afa_val = afa_ertek_eddig - elozo_afa_ertek;
+      elozo_afa_ertek = afa_ertek_eddig;
+      
+      let tb_val = 0;
+      let szoc_val = 0;
+      let tb_alap_negyedev = 0;
+      let szoc_alap_negyedev = 0;
+      
+      if (jogviszony === 'fofoglalkozu') {
+        if (honapok > 0) {
+          const osszes_honap_eddig = honapokNegyedenkent.slice(0, i + 1).reduce((a, b) => a + b, 0);
+          const min_tb_eddig = alkalmazott_minimalber * osszes_honap_eddig;
+          const min_szoc_eddig = alkalmazott_minimalber * szocho_szorzo * osszes_honap_eddig;
+          
+          const tb_alap_eddig = Math.max(adokot_jov_eddig, min_tb_eddig);
+          const szoc_alap_eddig = Math.max(adokot_jov_eddig, min_szoc_eddig);
+          
+          tb_alap_negyedev = tb_alap_eddig - elozo_tb_alap;
+          szoc_alap_negyedev = szoc_alap_eddig - elozo_szoc_alap;
+          
+          tb_val = tb_alap_negyedev * 0.185;
+          szoc_val = szoc_alap_negyedev * 0.13;
+          
+          elozo_tb_alap = tb_alap_eddig;
+          elozo_szoc_alap = szoc_alap_eddig;
+        }
+      } else if (jogviszony === 'mellek') {
+        tb_alap_negyedev = szja_alap_negyedev;
+        szoc_alap_negyedev = szja_alap_negyedev;
+        tb_val = tb_alap_negyedev * 0.185;
+        szoc_val = szoc_alap_negyedev * 0.13;
+      }
+      
+      negyedek.push({
+        bevetel: bev,
+        jovedelem: jov,
+        szja: szja_val,
+        tb_jarulék: tb_val,
+        szocho: szoc_val,
+        afa: afa_val,
+        honapok: honapok
+      });
+    }
+    
+    const osszes_bevetel = negyedevesBevetelek.reduce((a, b) => a + b, 0);
+    const osszes_kulfoldi_bev = negyedevesKulfoldiBevetelek.reduce((a, b) => a + b, 0);
+    const osszes_szja = negyedek.reduce((sum, n) => sum + n.szja, 0);
+    const osszes_tb = negyedek.reduce((sum, n) => sum + n.tb_jarulék, 0);
+    const osszes_szoc = negyedek.reduce((sum, n) => sum + n.szocho, 0);
+    const osszes_afa = negyedek.reduce((sum, n) => sum + n.afa, 0);
+    
+    return {
+      negyedek,
+      osszes_bevetel,
+      osszes_kulfoldi_bev,
+      osszes_szja,
+      osszes_tb,
+      osszes_szoc,
+      osszes_afa
+    };
+  }, [negyedevesBevetelek, negyedevesKulfoldiBevetelek, koltseg_hanyad, ADÓMENTES_JÖVEDELEM, jogviszony, alkalmazott_minimalber, ev, honapokNegyedenkent, aranyositott_afa_limit]);
 
   // Központi számítási logika (unifikálva)
   const kalkulalAdokat = useMemo(() => {
@@ -176,8 +287,64 @@ export default function AtalanyadoDiagram() {
   }, [koltseg_hanyad, ADÓMENTES_JÖVEDELEM, jogviszony, alkalmazott_minimalber, ev, aranyositoTenyezo, hipaKulcs, aranyositott_afa_limit]);
 
   // Jelenlegi adatok kiszámítása az aktuális bevételre
-  const aktualisAdok = useMemo(() => kalkulalAdokat(eves_bevetel, kulfoldi_bev_osszeg), [kalkulalAdokat, eves_bevetel, kulfoldi_bev_osszeg]);
+  const aktualisAdok = useMemo(() => {
+    if (isNegyedeves) {
+      const { osszes_bevetel, osszes_kulfoldi_bev, osszes_szja, osszes_tb, osszes_szoc, osszes_afa } = negyedevesSzamitas;
+      const alapAdok = kalkulalAdokat(osszes_bevetel, osszes_kulfoldi_bev);
+      const ossz = osszes_szja + osszes_tb + osszes_szoc + alapAdok.hipa + osszes_afa + KAMARAI_HOZZAJARULAS;
+      
+      return {
+        ...alapAdok,
+        bevetel: osszes_bevetel,
+        szja: osszes_szja,
+        tb_jarulék: osszes_tb,
+        szocho: osszes_szoc,
+        afa: osszes_afa,
+        osszes_ado: ossz,
+        ado_szazalek: osszes_bevetel > 0 ? (ossz / osszes_bevetel) * 100 : 0
+      };
+    }
+    return { ...kalkulalAdokat(eves_bevetel, kulfoldi_bev_osszeg), bevetel: eves_bevetel };
+  }, [isNegyedeves, negyedevesSzamitas, kalkulalAdokat, eves_bevetel, kulfoldi_bev_osszeg]);
+
   const { jovedelem, szja, tb_jarulék, szocho, hipa, afa, osszes_ado, ado_szazalek } = aktualisAdok;
+
+  const isInitialMount = React.useRef(true);
+
+  // Szinkronizálás az éves és negyedéves bevételek között (csak váltáskor)
+  useEffect(() => {
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      return;
+    }
+    
+    if (isNegyedeves) {
+      // Ha negyedévesre váltunk, osszuk el az éves bevételt a negyedévekre (arányosan a működési hónapokkal)
+      const osszHonap = honapokNegyedenkent.reduce((a, b) => a + b, 0);
+      if (osszHonap > 0) {
+        const ujBevetelek = honapokNegyedenkent.map(h => Math.floor((eves_bevetel / osszHonap) * h));
+        const ujKulfoldiBevetelek = honapokNegyedenkent.map(h => Math.floor((kulfoldi_bev_osszeg / osszHonap) * h));
+        
+        // Korrekció az utolsó aktív negyedévnél a kerekítés miatt
+        const utolsoAktivIdx = [...honapokNegyedenkent].reverse().findIndex(h => h > 0);
+        if (utolsoAktivIdx !== -1) {
+          const idx = 3 - utolsoAktivIdx;
+          ujBevetelek[idx] += (eves_bevetel - ujBevetelek.reduce((a, b) => a + b, 0));
+          ujKulfoldiBevetelek[idx] += (kulfoldi_bev_osszeg - ujKulfoldiBevetelek.reduce((a, b) => a + b, 0));
+        }
+        
+        setNegyedevesBevetelek(ujBevetelek);
+        setNegyedevesKulfoldiBevetelek(ujKulfoldiBevetelek);
+      }
+    } else {
+      // Ha évesre váltunk vissza, az összeg legyen az éves
+      const osszes = negyedevesBevetelek.reduce((a, b) => a + b, 0);
+      setEvesBevetel(osszes);
+      const osszesKulfoldi = negyedevesKulfoldiBevetelek.reduce((a, b) => a + b, 0);
+      setKulfoldiBevOsszeg(osszesKulfoldi);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isNegyedeves]);
 
   // Diagram adatok generálása
   const diagramAdatok = useMemo(() => {
@@ -290,20 +457,6 @@ export default function AtalanyadoDiagram() {
           </select>
         </div>
 
-        {/* Minimálbér típus */}
-        <div className="p-2 bg-purple-50 rounded">
-          <label className="block text-xs font-semibold mb-1 text-gray-700">Minimum alap</label>
-          <select 
-            value={minimalber_tipus} 
-            onChange={(e) => setMinimalberTipus(e.target.value)}
-            className="w-full p-1.5 text-sm border border-purple-300 rounded bg-white"
-            disabled={jogviszony !== 'fofoglalkozu'}
-          >
-            <option value="minimalber">Minimálbér</option>
-            <option value="berminimum">Bérminimum</option>
-          </select>
-        </div>
-
         {/* Indulás hónapja */}
         <div className="p-2 bg-orange-50 rounded">
           <label className="block text-xs font-semibold mb-1 text-gray-700">Indulás</label>
@@ -335,9 +488,24 @@ export default function AtalanyadoDiagram() {
             onChange={(e) => setHipaKulcs(Number(e.target.value))}
             className="w-full p-1.5 text-sm border border-pink-300 rounded bg-white"
           >
+            <option value={0}>0%</option>
             <option value={1}>1%</option>
             <option value={2}>2%</option>
           </select>
+        </div>
+
+        {/* Szakképesítést igénylő munka */}
+        <div className="p-2 bg-purple-50 rounded flex flex-col justify-center">
+          <label className="flex items-center gap-2 cursor-pointer h-full">
+            <input 
+              type="checkbox"
+              checked={isSzakkepesitestIgenylo} 
+              onChange={(e) => setIsSzakkepesitestIgenylo(e.target.checked)}
+              className="w-4 h-4 text-purple-600 border-purple-300 rounded focus:ring-purple-500"
+              disabled={jogviszony !== 'fofoglalkozu'}
+            />
+            <span className="text-xs font-semibold text-gray-700">Szakképesítést igénylő munka</span>
+          </label>
         </div>
       </div>
 
@@ -374,71 +542,156 @@ export default function AtalanyadoDiagram() {
 
       {/* Bevétel beállítás */}
       <div className="mb-4 p-4 bg-blue-50 rounded">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-3">
-          <div className="flex-1">
-            <h2 className="text-lg font-semibold mb-2 text-gray-800">Éves összes bevétel</h2>
-            <div className="flex gap-3 items-center">
-              <input
-                type="number"
-                min="0"
-                max={aranyositott_limit}
-                step="100000"
-                value={eves_bevetel}
-                onChange={(e) => setEvesBevetel(Math.min(Number(e.target.value), aranyositott_limit))}
-                className="w-48 p-2 text-lg font-bold border-2 border-blue-300 rounded"
-              />
-              <span className="text-gray-600">Ft</span>
-            </div>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
+          <div className="flex items-center gap-3 p-2 bg-blue-100 rounded-lg">
+            <label className="text-sm font-bold text-blue-800">Negyedéves bontás</label>
+            <button 
+              onClick={() => setIsNegyedeves(!isNegyedeves)}
+              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${isNegyedeves ? 'bg-blue-600' : 'bg-gray-400'}`}
+            >
+              <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${isNegyedeves ? 'translate-x-6' : 'translate-x-1'}`} />
+            </button>
           </div>
-
-          {eves_bevetel > aranyositott_afa_limit && (
-            <div className="flex-1 p-3 bg-yellow-100 rounded border border-yellow-300 animate-in fade-in slide-in-from-top-2 duration-300">
-              <label className="block text-xs font-bold mb-1 text-yellow-800 uppercase tracking-wider">
-                Ebből külföldi (ÁFA-mentes) rész:
-              </label>
-              <div className="flex gap-2 items-center">
-                <div className="relative flex-1">
-                  <input 
-                    type="number"
-                    min="0"
-                    max={eves_bevetel}
-                    step="100000"
-                    value={kulfoldi_bev_osszeg}
-                    onChange={(e) => setKulfoldiBevOsszeg(Math.min(eves_bevetel, Number(e.target.value)))}
-                    className="w-full p-2 text-lg border-2 border-yellow-400 rounded bg-white font-bold text-yellow-700 focus:ring-2 focus:ring-yellow-500 focus:outline-none"
-                  />
-                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-yellow-600 font-bold">Ft</span>
-                </div>
-                <div className="bg-yellow-200 px-3 py-2 rounded font-bold text-yellow-800 text-lg min-w-[65px] text-center border-2 border-yellow-300">
-                  {eves_bevetel > 0 ? ((kulfoldi_bev_osszeg / eves_bevetel) * 100).toFixed(0) : 0}%
-                </div>
+          
+          {!isNegyedeves && (
+            <div className="flex-1 flex justify-end">
+              <div className="bg-blue-100 px-4 py-2 rounded-lg border border-blue-200">
+                <span className="text-sm text-blue-700 font-medium">Összes éves bevétel: </span>
+                <span className="text-lg font-bold text-blue-900">{formatCurrency(eves_bevetel)}</span>
               </div>
-              <input
-                type="range"
-                min="0"
-                max={eves_bevetel}
-                step="100000"
-                value={kulfoldi_bev_osszeg}
-                onChange={(e) => setKulfoldiBevOsszeg(Number(e.target.value))}
-                className="w-full h-1.5 bg-yellow-300 rounded-lg appearance-none cursor-pointer mt-3 accent-yellow-600"
-              />
-              <p className="text-[10px] text-yellow-700 mt-1 font-medium italic">
-                A külföldi/EU B2B rész nem számít az ÁFA keretbe!
-              </p>
+            </div>
+          )}
+          
+          {isNegyedeves && (
+            <div className="flex-1 flex justify-end">
+              <div className="bg-green-100 px-4 py-2 rounded-lg border border-green-200">
+                <span className="text-sm text-green-700 font-medium">Negyedévek összesen: </span>
+                <span className="text-lg font-bold text-green-900">{formatCurrency(negyedevesSzamitas.osszes_bevetel)}</span>
+              </div>
             </div>
           )}
         </div>
+
+        {!isNegyedeves ? (
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-3">
+            <div className="flex-1">
+              <h2 className="text-lg font-semibold mb-2 text-gray-800">Éves összes bevétel</h2>
+              <div className="flex gap-3 items-center">
+                <input
+                  type="number"
+                  min="0"
+                  max={aranyositott_limit}
+                  step="100000"
+                  value={eves_bevetel}
+                  onChange={(e) => setEvesBevetel(Math.min(Number(e.target.value), aranyositott_limit))}
+                  className="w-48 p-2 text-lg font-bold border-2 border-blue-300 rounded"
+                />
+                <span className="text-gray-600">Ft</span>
+              </div>
+            </div>
+
+            {eves_bevetel > aranyositott_afa_limit && (
+              <div className="flex-1 p-3 bg-yellow-100 rounded border border-yellow-300 animate-in fade-in slide-in-from-top-2 duration-300">
+                <label className="block text-xs font-bold mb-1 text-yellow-800 uppercase tracking-wider">
+                  Ebből külföldi (ÁFA-mentes) rész:
+                </label>
+                <div className="flex gap-2 items-center">
+                  <div className="relative flex-1">
+                    <input 
+                      type="number"
+                      min="0"
+                      max={eves_bevetel}
+                      step="100000"
+                      value={kulfoldi_bev_osszeg}
+                      onChange={(e) => setKulfoldiBevOsszeg(Math.min(eves_bevetel, Number(e.target.value)))}
+                      className="w-full p-2 text-lg border-2 border-yellow-400 rounded bg-white font-bold text-yellow-700 focus:ring-2 focus:ring-yellow-500 focus:outline-none"
+                    />
+                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-yellow-600 font-bold">Ft</span>
+                  </div>
+                  <div className="bg-yellow-200 px-3 py-2 rounded font-bold text-yellow-800 text-lg min-w-[65px] text-center border-2 border-yellow-300">
+                    {eves_bevetel > 0 ? ((kulfoldi_bev_osszeg / eves_bevetel) * 100).toFixed(0) : 0}%
+                  </div>
+                </div>
+                <input
+                  type="range"
+                  min="0"
+                  max={eves_bevetel}
+                  step="100000"
+                  value={kulfoldi_bev_osszeg}
+                  onChange={(e) => setKulfoldiBevOsszeg(Number(e.target.value))}
+                  className="w-full h-1.5 bg-yellow-300 rounded-lg appearance-none cursor-pointer mt-3 accent-yellow-600"
+                />
+              </div>
+            )}
+          </div>
+        ) : (
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              {[0, 1, 2, 3].map((i) => (
+                <div key={i} className={`p-3 rounded border-2 ${honapokNegyedenkent[i] > 0 ? 'bg-white border-blue-200' : 'bg-gray-100 border-gray-200 opacity-60'}`}>
+                  <div className="flex justify-between items-center mb-2">
+                    <label className="text-sm font-bold text-gray-700">{i + 1}. negyedév</label>
+                    <span className="text-[10px] text-gray-500 font-medium">{honapokNegyedenkent[i]} hónap</span>
+                  </div>
+                  <div className="space-y-3">
+                    <div>
+                      <label className="block text-[10px] text-gray-500 uppercase font-bold mb-1">Bevétel (Ft)</label>
+                      <input
+                        type="number"
+                        min="0"
+                        disabled={honapokNegyedenkent[i] === 0}
+                        value={negyedevesBevetelek[i]}
+                        onChange={(e) => {
+                          const newBevs = [...negyedevesBevetelek];
+                          newBevs[i] = Number(e.target.value);
+                          setNegyedevesBevetelek(newBevs);
+                        }}
+                        className="w-full p-1.5 text-sm font-bold border border-gray-300 rounded focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none"
+                      />
+                    </div>
+                    {negyedevesSzamitas.osszes_bevetel > aranyositott_afa_limit && (
+                      <div className="animate-in fade-in slide-in-from-top-1 duration-300">
+                        <label className="block text-[10px] text-yellow-700 uppercase font-bold mb-1">Ebből külföldi (Ft)</label>
+                        <input
+                          type="number"
+                          min="0"
+                          max={negyedevesBevetelek[i]}
+                          disabled={honapokNegyedenkent[i] === 0}
+                          value={negyedevesKulfoldiBevetelek[i]}
+                          onChange={(e) => {
+                            const newKulfBevs = [...negyedevesKulfoldiBevetelek];
+                            newKulfBevs[i] = Math.min(negyedevesBevetelek[i], Number(e.target.value));
+                            setNegyedevesKulfoldiBevetelek(newKulfBevs);
+                          }}
+                          className="w-full p-1.5 text-sm font-bold border border-yellow-300 rounded focus:border-yellow-500 focus:ring-1 focus:ring-yellow-500 outline-none"
+                        />
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+            {negyedevesSzamitas.osszes_bevetel > aranyositott_afa_limit && (
+              <p className="text-[10px] text-yellow-700 font-medium italic bg-yellow-50 p-2 rounded border border-yellow-200">
+                Mivel az összbevételed meghaladja az ÁFA keretet, megadhatod a külföldi (ÁFA-mentes) részt, ami csökkenti a belföldi ÁFA-alapot.
+              </p>
+            )}
+          </div>
+        )}
         
-        <input
-          type="range"
-          min="2000000"
-          max={Math.min(aranyositott_limit, 50000000)}
-          step="500000"
-          value={Math.min(eves_bevetel, aranyositott_limit)}
-          onChange={(e) => setEvesBevetel(Number(e.target.value))}
-          className="w-full h-2 bg-blue-200 rounded-lg appearance-none cursor-pointer"
-        />
-        {eves_bevetel > aranyositott_limit && (
+        {!isNegyedeves && (
+          <input
+            type="range"
+            min="2000000"
+            max={Math.min(aranyositott_limit, 50000000)}
+            step="500000"
+            value={Math.min(eves_bevetel, aranyositott_limit)}
+            onChange={(e) => setEvesBevetel(Number(e.target.value))}
+            className="w-full h-2 bg-blue-200 rounded-lg appearance-none cursor-pointer mt-4"
+          />
+        )}
+        
+        {((!isNegyedeves && eves_bevetel > aranyositott_limit) || (isNegyedeves && negyedevesSzamitas.osszes_bevetel > aranyositott_limit)) && (
           <p className="text-center text-red-600 font-semibold mt-2 text-sm">⚠️ Túllépi az arányosított limitet!</p>
         )}
       </div>
@@ -460,6 +713,12 @@ export default function AtalanyadoDiagram() {
           <div className="text-sm font-bold text-pink-700">{formatCurrency(szocho)}</div>
         </div>
 
+        <div className="p-2 bg-red-50 rounded border border-red-200">
+          <div className="text-xs text-gray-600 mb-0.5">ÁFA (27% limit felett)</div>
+          <div className="text-sm font-bold text-red-700">{formatCurrency(afa)}</div>
+        </div>
+        </div>
+
         <div className="p-2 bg-indigo-50 rounded border border-indigo-200">
           <div className="text-xs text-gray-600 mb-0.5">HIPA ({hipaKulcs}%)</div>
           <div className="text-sm font-bold text-indigo-700">{formatCurrency(hipa)}</div>
@@ -469,12 +728,38 @@ export default function AtalanyadoDiagram() {
           <div className="text-xs text-gray-600 mb-0.5">Kamarai hozzájárulás</div>
           <div className="text-sm font-bold text-teal-700">{formatCurrency(KAMARAI_HOZZAJARULAS)}</div>
         </div>
-
-        <div className="p-2 bg-red-50 rounded border border-red-200">
-          <div className="text-xs text-gray-600 mb-0.5">ÁFA (27% limit felett)</div>
-          <div className="text-sm font-bold text-red-700">{formatCurrency(afa)}</div>
+      
+      {/* Negyedéves részletezés (ha aktív) */}
+      {isNegyedeves && (
+        <div className="mb-6 overflow-x-auto">
+          <table className="w-full text-sm text-left text-gray-500 border-collapse border border-gray-200 rounded-lg overflow-hidden">
+            <thead className="text-xs text-gray-700 uppercase bg-gray-100">
+              <tr>
+                <th className="px-3 py-2 border border-gray-200">Időszak</th>
+                <th className="px-3 py-2 border border-gray-200">Bevétel</th>
+                <th className="px-3 py-2 border border-gray-200">SZJA</th>
+                <th className="px-3 py-2 border border-gray-200">TB</th>
+                <th className="px-3 py-2 border border-gray-200">SZOCHO</th>
+                <th className="px-3 py-2 border border-gray-200">ÁFA</th>
+                <th className="px-3 py-2 border border-gray-200 font-bold">Összesen</th>
+              </tr>
+            </thead>
+            <tbody>
+              {negyedevesSzamitas.negyedek.map((n, i) => (
+                <tr key={i} className={n.honapok === 0 ? 'bg-gray-50 opacity-40' : 'bg-white hover:bg-blue-50'}>
+                  <td className="px-3 py-2 border border-gray-200 font-medium text-gray-900">{i + 1}. negyedév</td>
+                  <td className="px-3 py-2 border border-gray-200">{formatCurrency(n.bevetel)}</td>
+                  <td className="px-3 py-2 border border-gray-200 text-orange-600">{formatCurrency(n.szja)}</td>
+                  <td className="px-3 py-2 border border-gray-200 text-purple-600">{formatCurrency(n.tb_jarulék)}</td>
+                  <td className="px-3 py-2 border border-gray-200 text-pink-600">{formatCurrency(n.szocho)}</td>
+                  <td className="px-3 py-2 border border-gray-200 text-red-600">{formatCurrency(n.afa)}</td>
+                  <td className="px-3 py-2 border border-gray-200 font-bold text-gray-700">{formatCurrency(n.szja + n.tb_jarulék + n.szocho + n.afa)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
-      </div>
+      )}
 
       {/* Összesítés */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
@@ -529,16 +814,16 @@ export default function AtalanyadoDiagram() {
             />
             {/* Aktuális bevétel jelzése */}
             <ReferenceLine 
-              x={eves_bevetel} 
+              x={aktualisAdok.bevetel} 
               stroke="#2563eb" 
               strokeWidth={2}
               strokeDasharray="3 3"
               label={{ value: 'Bevétel', position: 'insideBottomRight', fill: '#2563eb', fontSize: 12, fontWeight: 'bold', offset: 10 }} 
             />
             {/* ÁFA fordulópont jelzése */}
-            {aranyositott_afa_limit + kulfoldi_bev_osszeg < aranyositott_limit && (
+            {aranyositott_afa_limit + (isNegyedeves ? negyedevesSzamitas.osszes_kulfoldi_bev : kulfoldi_bev_osszeg) < aranyositott_limit && (
               <ReferenceLine 
-                x={aranyositott_afa_limit + kulfoldi_bev_osszeg} 
+                x={aranyositott_afa_limit + (isNegyedeves ? negyedevesSzamitas.osszes_kulfoldi_bev : kulfoldi_bev_osszeg)} 
                 stroke="#ec4899" 
                 strokeDasharray="5 5"
                 label={{ value: 'ÁFA határ', position: 'top', fill: '#ec4899', fontSize: 10, fontWeight: 'bold' }} 
@@ -598,7 +883,7 @@ export default function AtalanyadoDiagram() {
           <p className="mt-3"><strong>HIPA (iparűzési adó):</strong></p>
           <ul className="ml-4 space-y-1">
             <li>• Egyszerűsített sávos módszer alkalmazható 25M Ft-ig (kisker. 120M Ft-ig)</li>
-            <li>• 0-12M: 50 000 Ft (2%), 12-18M: 120 000 Ft (2%), 18-25M: 170 000 Ft (2%)</li>
+            <li>• 0-12M: {formatCurrency(2500000 * (hipaKulcs / 100))} ({hipaKulcs}%), 12-18M: {formatCurrency(6000000 * (hipaKulcs / 100))} ({hipaKulcs}%), 18-25M: {formatCurrency(8500000 * (hipaKulcs / 100))} ({hipaKulcs}%)</li>
             <li>• Az adómérték településenként változhat (max. 2%)</li>
           </ul>
 

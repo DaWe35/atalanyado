@@ -202,8 +202,12 @@ export default function AtalanyadoDiagram() {
           tb_alap_negyedev = tb_alap_eddig - elozo_tb_alap;
           szoc_alap_negyedev = szoc_alap_eddig - elozo_szoc_alap;
           
-          tb_val = Math.round(tb_alap_negyedev * 0.185);
-          szoc_val = Math.round(szoc_alap_negyedev * 0.13);
+          // Havi szintű kerekítés a negyedéven belül
+          const tb_havi = Math.round((tb_alap_negyedev / honapok) * 0.185);
+          const szoc_havi = Math.round((szoc_alap_negyedev / honapok) * 0.13);
+          
+          tb_val = tb_havi * honapok;
+          szoc_val = szoc_havi * honapok;
           
           elozo_tb_alap = tb_alap_eddig;
           elozo_szoc_alap = szoc_alap_eddig;
@@ -211,8 +215,12 @@ export default function AtalanyadoDiagram() {
       } else if (jogviszony === 'mellek') {
         tb_alap_negyedev = szja_alap_negyedev;
         szoc_alap_negyedev = szja_alap_negyedev;
-        tb_val = Math.round(tb_alap_negyedev * 0.185);
-        szoc_val = Math.round(szoc_alap_negyedev * 0.13);
+        
+        const tb_havi = Math.round((tb_alap_negyedev / honapok) * 0.185);
+        const szoc_havi = Math.round((szoc_alap_negyedev / honapok) * 0.13);
+        
+        tb_val = tb_havi * honapok;
+        szoc_val = szoc_havi * honapok;
       }
       
       negyedek.push({
@@ -262,11 +270,20 @@ export default function AtalanyadoDiagram() {
         const havi_min_szoc = alkalmazott_minimalber * szocho_szorzo;
         const tb_alap = Math.max(adokot_jov, havi_min_tb * 12 * aranyositoTenyezo);
         const szoc_alap = Math.max(adokot_jov, havi_min_szoc * 12 * aranyositoTenyezo);
-        tb_val = Math.round(tb_alap * 0.185);
-        szoc_val = Math.round(szoc_alap * 0.13);
+        
+        const activeMonths = Math.round(12 * aranyositoTenyezo);
+        const tb_havi = Math.round((tb_alap / activeMonths) * 0.185);
+        const szoc_havi = Math.round((szoc_alap / activeMonths) * 0.13);
+        
+        tb_val = tb_havi * activeMonths;
+        szoc_val = szoc_havi * activeMonths;
       } else if (jogviszony === 'mellek') {
-        tb_val = Math.round(adokot_jov * 0.185);
-        szoc_val = Math.round(adokot_jov * 0.13);
+        const activeMonths = Math.round(12 * aranyositoTenyezo);
+        const tb_havi = Math.round((adokot_jov / activeMonths) * 0.185);
+        const szoc_havi = Math.round((adokot_jov / activeMonths) * 0.13);
+        
+        tb_val = tb_havi * activeMonths;
+        szoc_val = szoc_havi * activeMonths;
       }
       
       let egyszerusitett_hipa = Infinity;

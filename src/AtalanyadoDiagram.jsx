@@ -909,6 +909,16 @@ export default function AtalanyadoDiagram() {
           GitHub-on.
         </a>
       </div>
+
+      {/* Felelősségkorlátozás */}
+      <div className="mt-8 pt-6 border-t border-gray-200 text-center">
+        <p className="text-xs text-gray-500 italic">
+          <strong>Felelősségkorlátozás:</strong> Ez az oldal egy független kalkulátor, az adatok tájékoztató jellegűek. 
+          A számítások nem minősülnek hivatalos adótanácsadásnak és nem helyettesítik a szakemberrel való konzultációt. 
+          Az oldal nem ellenőrzött hivatalos szervek által. A fejlesztő nem vállal felelősséget a számítások esetleges 
+          pontatlanságáért vagy az adatok felhasználásából eredő károkért. Mindig egyeztessen könyvelőjével!
+        </p>
+      </div>
     </div>
   );
 }

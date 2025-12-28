@@ -16,7 +16,7 @@ export default function AtalanyadoDiagram() {
   const jelenlegiEvKoltsegHanyad = jelenlegiEv === 2025 ? 40 : (jelenlegiEv === 2026 ? 45 : 50);
   
   const [eves_bevetel, setEvesBevetel] = useState(10000000);
-  const [jogviszony, setJogviszony] = useState('fofoglalkozu'); // fofoglalkozu, mellek, kiegeszito
+  const [jogviszony, setJogviszony] = useState('fofoglalkozu_min'); // fofoglalkozu_min, fofoglalkozu_gar, mellek, kiegeszito
   const [ev, setEv] = useState(jelenlegiEv); // 2025, 2026, 2027
   const [koltseg_hanyad, setKoltsegHanyad] = useState(jelenlegiEvKoltsegHanyad);
   
@@ -36,7 +36,6 @@ export default function AtalanyadoDiagram() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ev]);
-  const [isSzakkepesitestIgenylo, setIsSzakkepesitestIgenylo] = useState(false);
   const [indulasHonap, setIndulasHonap] = useState(1); // 1-12
   const [hipaKulcs, setHipaKulcs] = useState(2);
   const [kulfoldi_bev_osszeg, setKulfoldiBevOsszeg] = useState(0);
@@ -90,8 +89,8 @@ export default function AtalanyadoDiagram() {
   );
   
   const alkalmazott_minimalber = useMemo(() => 
-    isSzakkepesitestIgenylo ? GARANTÁLT_BÉRMINIMUM : MINIMÁLBÉR,
-    [isSzakkepesitestIgenylo, GARANTÁLT_BÉRMINIMUM, MINIMÁLBÉR]
+    jogviszony === 'fofoglalkozu_gar' ? GARANTÁLT_BÉRMINIMUM : MINIMÁLBÉR,
+    [jogviszony, GARANTÁLT_BÉRMINIMUM, MINIMÁLBÉR]
   );
   
   const MAX_BEVETEL_80 = useMemo(() => 
@@ -190,7 +189,7 @@ export default function AtalanyadoDiagram() {
       let tb_alap_negyedev = 0;
       let szoc_alap_negyedev = 0;
       
-      if (jogviszony === 'fofoglalkozu') {
+      if (jogviszony === 'fofoglalkozu_min' || jogviszony === 'fofoglalkozu_gar') {
         if (honapok > 0) {
           const osszes_honap_eddig = honapokNegyedenkent.slice(0, i + 1).reduce((a, b) => a + b, 0);
           const min_tb_eddig = alkalmazott_minimalber * osszes_honap_eddig;
@@ -264,7 +263,7 @@ export default function AtalanyadoDiagram() {
       let tb_val = 0;
       let szoc_val = 0;
       
-      if (jogviszony === 'fofoglalkozu') {
+      if (jogviszony === 'fofoglalkozu_min' || jogviszony === 'fofoglalkozu_gar') {
         const havi_min_tb = alkalmazott_minimalber;
         const szocho_szorzo = ev === 2025 ? 1.125 : 1.0;
         const havi_min_szoc = alkalmazott_minimalber * szocho_szorzo;
@@ -467,7 +466,8 @@ export default function AtalanyadoDiagram() {
             onChange={(e) => setJogviszony(e.target.value)}
             className="w-full p-1.5 text-sm border border-blue-300 rounded bg-white"
           >
-            <option value="fofoglalkozu">Főfoglalkozású</option>
+            <option value="fofoglalkozu_min">Főfoglalkozású minimálbér</option>
+            <option value="fofoglalkozu_gar">Főfoglalkozású garantált bérminimum (szakképesítéshez kötött munka esetén)</option>
             <option value="mellek">Mellékfoglalkozású</option>
             <option value="kiegeszito">Kiegészítő</option>
           </select>
@@ -553,20 +553,6 @@ export default function AtalanyadoDiagram() {
             />
           </div>
         )}
-
-        {/* Szakképesítést igénylő munka */}
-        <div className="p-2 bg-purple-50 rounded flex flex-col justify-center">
-          <label className="flex items-center gap-2 cursor-pointer h-full">
-            <input 
-              type="checkbox"
-              checked={isSzakkepesitestIgenylo} 
-              onChange={(e) => setIsSzakkepesitestIgenylo(e.target.checked)}
-              className="w-4 h-4 text-purple-600 border-purple-300 rounded focus:ring-purple-500"
-              disabled={jogviszony !== 'fofoglalkozu'}
-            />
-            <span className="text-xs font-semibold text-gray-700">Szakképesítést igénylő munka</span>
-          </label>
-        </div>
       </div>
 
       {ev === 2027 && (
@@ -956,9 +942,10 @@ export default function AtalanyadoDiagram() {
           
           <p className="mt-4"><strong>Jogviszony típusok:</strong></p>
           <ul className="ml-4 space-y-1">
-            <li>• <strong>Főfoglalkozású:</strong> Kötelező minimum TB (18,5%) és SZOCHO (13%){ev >= 2026 ? ' - 100%-on!' : ' - 112,5%-on (2025)'}</li>
-            <li>• <strong>Mellékfoglalkozású:</strong> TB (18,5%) és SZOCHO (13%), de nincs minimum</li>
-            <li>• <strong>Kiegészítő:</strong> Opcionális járulékfizetés (itt 0-val számolva)</li>
+            <li>• <strong>Főfoglalkozású (minimálbér):</strong> Kötelező minimum TB (18,5%) és SZOCHO (13%) a minimálbér után{ev >= 2026 ? '' : ' (112,5%-on 2025-ben)'}</li>
+            <li>• <strong>Főfoglalkozású (garantált bérminimum):</strong> Szakképesítést igénylő munka esetén, magasabb minimum járulékalap</li>
+            <li>• <strong>Mellékfoglalkozású:</strong> TB (18,5%) és SZOCHO (13%), de nincs minimum alap (csak a tényleges jövedelem után)</li>
+            <li>• <strong>Kiegészítő:</strong> Nyugdíjas vállalkozó, nem fizet TB-t és SZOCHO-t</li>
           </ul>
           
           <p className="mt-3"><strong>Költséghányad értékek:</strong></p>

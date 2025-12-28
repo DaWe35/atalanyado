@@ -709,7 +709,7 @@ export default function AtalanyadoDiagram() {
                   type="number"
                   min="0"
                   max={aranyositott_limit}
-                  step="100000"
+                  step="500000"
                   value={eves_bevetel}
                   onChange={(e) => setEvesBevetel(Math.min(Number(e.target.value), aranyositott_limit))}
                   className="w-48 p-2 text-lg font-bold border-2 border-blue-300 rounded"
@@ -729,7 +729,7 @@ export default function AtalanyadoDiagram() {
                       type="number"
                       min="0"
                       max={eves_bevetel}
-                      step="100000"
+                      step="500000"
                       value={kulfoldi_bev_osszeg}
                       onChange={(e) => setKulfoldiBevOsszeg(Math.min(eves_bevetel, Number(e.target.value)))}
                       className="w-full p-2 text-lg border-2 border-yellow-400 rounded bg-white font-bold text-yellow-700 focus:ring-2 focus:ring-yellow-500 focus:outline-none"
@@ -744,7 +744,7 @@ export default function AtalanyadoDiagram() {
                   type="range"
                   min="0"
                   max={eves_bevetel}
-                  step="100000"
+                  step="500000"
                   value={kulfoldi_bev_osszeg}
                   onChange={(e) => setKulfoldiBevOsszeg(Number(e.target.value))}
                   className="w-full h-1.5 bg-yellow-300 rounded-lg appearance-none cursor-pointer mt-3 accent-yellow-600"
@@ -1071,9 +1071,10 @@ export default function AtalanyadoDiagram() {
           
           <p className="mt-3"><strong>HIPA (iparűzési adó):</strong></p>
           <ul className="ml-4 space-y-1">
-            <li>• Egyszerűsített sávos módszer alkalmazható 25M Ft-ig (kisker. 120M Ft-ig)</li>
-            <li>• 0-12M: {formatCurrency(2500000 * (hipaKulcs / 100))} ({hipaKulcs}%), 12-18M: {formatCurrency(6000000 * (hipaKulcs / 100))} ({hipaKulcs}%), 18-25M: {formatCurrency(8500000 * (hipaKulcs / 100))} ({hipaKulcs}%)</li>
             <li>• Az adómérték településenként változhat (max. 2%)</li>
+            <li>• Egyszerűsített sávos módszer is alkalmazható 25M Ft-ig (kisker. 120M Ft-ig)</li>
+            <li>• 0-12M: {formatCurrency(2500000 * (hipaKulcs / 100))} ({hipaKulcs}%), 12-18M: {formatCurrency(6000000 * (hipaKulcs / 100))} ({hipaKulcs}%), 18-25M: {formatCurrency(8500000 * (hipaKulcs / 100))} ({hipaKulcs}%)</li>
+            <li>• 25M Ft felett: ({hipaKulcs}%), melyből tételes költség levonható. A kalkulátor 2.5M Ft alatt is ezt a módszert alkalmazza, mert előnyösebb.</li>
           </ul>
 
           <p className="mt-3"><strong>Közösségi (EU) és Külföldi értékesítés:</strong></p>

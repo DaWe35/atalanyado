@@ -45,7 +45,11 @@ export default function AtalanyadoDiagram() {
   
   // Rejtett költségek
   const [showHiddenCosts, setShowHiddenCosts] = useState(false);
+  const [isKonyveloEnabled, setIsKonyveloEnabled] = useState(true);
   const [konyveloHaviDij, setKonyveloHaviDij] = useState(15000);
+  const [isSzamlazoEnabled, setIsSzamlazoEnabled] = useState(false);
+  const [szamlazoHaviDij, setSzamlazoHaviDij] = useState(2146);
+  const [isTranzakcioEnabled, setIsTranzakcioEnabled] = useState(false);
   
   // Minimálbér és garantált bérminimum értékek évenként (konstansok)
   const MINIMÁLBÉR_2025 = 290800;
@@ -168,8 +172,9 @@ export default function AtalanyadoDiagram() {
       const belfoldi_bev = Math.max(0, bev - kulfoldi_bev);
       osszes_belfoldi_bevetel_eddig += belfoldi_bev;
 
-      const n_tranzakcios_illetek = showHiddenCosts ? Math.round(bev * 0.0045) : 0;
-      const n_konyvelo_koltseg = showHiddenCosts ? konyveloHaviDij * honapok : 0;
+      const n_tranzakcios_illetek = (showHiddenCosts && isTranzakcioEnabled) ? Math.round(bev * 0.0045) : 0;
+      const n_konyvelo_koltseg = (showHiddenCosts && isKonyveloEnabled) ? konyveloHaviDij * honapok : 0;
+      const n_szamlazo_koltseg = (showHiddenCosts && isSzamlazoEnabled) ? szamlazoHaviDij * honapok : 0;
 
       // Göngyölített SZJA
       const adokot_jov_eddig = Math.max(0, osszes_jovedelem_eddig - ADÓMENTES_JÖVEDELEM);
@@ -231,6 +236,7 @@ export default function AtalanyadoDiagram() {
         afa: afa_val,
         tranzakcios_illetek: n_tranzakcios_illetek,
         konyvelo_koltseg: n_konyvelo_koltseg,
+        szamlazo_koltseg: n_szamlazo_koltseg,
         honapok: honapok
       });
     }
@@ -241,6 +247,9 @@ export default function AtalanyadoDiagram() {
     const osszes_tb = negyedek.reduce((sum, n) => sum + n.tb_jarulék, 0);
     const osszes_szoc = negyedek.reduce((sum, n) => sum + n.szocho, 0);
     const osszes_afa = negyedek.reduce((sum, n) => sum + n.afa, 0);
+    const osszes_konyvelo = negyedek.reduce((sum, n) => sum + n.konyvelo_koltseg, 0);
+    const osszes_szamlazo = negyedek.reduce((sum, n) => sum + n.szamlazo_koltseg, 0);
+    const osszes_tranzakcio = negyedek.reduce((sum, n) => sum + n.tranzakcios_illetek, 0);
     
     return {
       negyedek,
@@ -249,9 +258,12 @@ export default function AtalanyadoDiagram() {
       osszes_szja,
       osszes_tb,
       osszes_szoc,
-      osszes_afa
+      osszes_afa,
+      osszes_konyvelo,
+      osszes_szamlazo,
+      osszes_tranzakcio
     };
-  }, [negyedevesBevetelek, negyedevesKulfoldiBevetelek, koltseg_hanyad, ADÓMENTES_JÖVEDELEM, jogviszony, alkalmazott_minimalber, ev, honapokNegyedenkent, aranyositott_afa_limit, showHiddenCosts, konyveloHaviDij]);
+  }, [negyedevesBevetelek, negyedevesKulfoldiBevetelek, koltseg_hanyad, ADÓMENTES_JÖVEDELEM, jogviszony, alkalmazott_minimalber, ev, honapokNegyedenkent, aranyositott_afa_limit, showHiddenCosts, isKonyveloEnabled, konyveloHaviDij, isSzamlazoEnabled, szamlazoHaviDij, isTranzakcioEnabled]);
 
   // Központi számítási logika (unifikálva)
   const kalkulalAdokat = useMemo(() => {
@@ -296,11 +308,12 @@ export default function AtalanyadoDiagram() {
       const belfoldi_bev = Math.max(0, bev - kulfoldi_bev);
       const afa_val = belfoldi_bev > aranyositott_afa_limit ? Math.round((belfoldi_bev - aranyositott_afa_limit) * 0.27) : 0;
       
-      const tranzakcios_illetek = showHiddenCosts ? Math.round(bev * 0.0045) : 0;
+      const tranzakcios_illetek = (showHiddenCosts && isTranzakcioEnabled) ? Math.round(bev * 0.0045) : 0;
       const activeMonths = 13 - indulasHonap;
-      const konyvelo_koltseg = showHiddenCosts ? konyveloHaviDij * activeMonths : 0;
+      const konyvelo_koltseg = (showHiddenCosts && isKonyveloEnabled) ? konyveloHaviDij * activeMonths : 0;
+      const szamlazo_koltseg = (showHiddenCosts && isSzamlazoEnabled) ? szamlazoHaviDij * activeMonths : 0;
 
-      const ossz = szja_val + tb_val + szoc_val + hipa_val + KAMARAI_HOZZAJARULAS + afa_val + tranzakcios_illetek + konyvelo_koltseg;
+      const ossz = szja_val + tb_val + szoc_val + hipa_val + KAMARAI_HOZZAJARULAS + afa_val + tranzakcios_illetek + konyvelo_koltseg + szamlazo_koltseg;
       
       return {
         jovedelem: jov,
@@ -311,18 +324,19 @@ export default function AtalanyadoDiagram() {
         afa: afa_val,
         tranzakcios_illetek,
         konyvelo_koltseg,
+        szamlazo_koltseg,
         osszes_ado: ossz,
         ado_szazalek: bev > 0 ? (ossz / bev) * 100 : 0
       };
     };
-  }, [koltseg_hanyad, ADÓMENTES_JÖVEDELEM, jogviszony, alkalmazott_minimalber, ev, aranyositoTenyezo, hipaKulcs, aranyositott_afa_limit, showHiddenCosts, konyveloHaviDij, indulasHonap]);
+  }, [koltseg_hanyad, ADÓMENTES_JÖVEDELEM, jogviszony, alkalmazott_minimalber, ev, aranyositoTenyezo, hipaKulcs, aranyositott_afa_limit, showHiddenCosts, isKonyveloEnabled, konyveloHaviDij, isSzamlazoEnabled, szamlazoHaviDij, isTranzakcioEnabled, indulasHonap]);
 
   // Jelenlegi adatok kiszámítása az aktuális bevételre
   const aktualisAdok = useMemo(() => {
     if (isNegyedeves) {
-      const { osszes_bevetel, osszes_kulfoldi_bev, osszes_szja, osszes_tb, osszes_szoc, osszes_afa } = negyedevesSzamitas;
+      const { osszes_bevetel, osszes_kulfoldi_bev, osszes_szja, osszes_tb, osszes_szoc, osszes_afa, osszes_konyvelo, osszes_szamlazo, osszes_tranzakcio } = negyedevesSzamitas;
       const alapAdok = kalkulalAdokat(osszes_bevetel, osszes_kulfoldi_bev);
-      const ossz = osszes_szja + osszes_tb + osszes_szoc + alapAdok.hipa + osszes_afa + KAMARAI_HOZZAJARULAS + (alapAdok.tranzakcios_illetek || 0) + (alapAdok.konyvelo_koltseg || 0);
+      const ossz = osszes_szja + osszes_tb + osszes_szoc + alapAdok.hipa + osszes_afa + KAMARAI_HOZZAJARULAS + osszes_tranzakcio + osszes_konyvelo + osszes_szamlazo;
       
       return {
         ...alapAdok,
@@ -331,6 +345,9 @@ export default function AtalanyadoDiagram() {
         tb_jarulék: osszes_tb,
         szocho: osszes_szoc,
         afa: osszes_afa,
+        tranzakcios_illetek: osszes_tranzakcio,
+        konyvelo_koltseg: osszes_konyvelo,
+        szamlazo_koltseg: osszes_szamlazo,
         osszes_ado: ossz,
         ado_szazalek: osszes_bevetel > 0 ? (ossz / osszes_bevetel) * 100 : 0
       };
@@ -338,7 +355,7 @@ export default function AtalanyadoDiagram() {
     return { ...kalkulalAdokat(eves_bevetel, kulfoldi_bev_osszeg), bevetel: eves_bevetel };
   }, [isNegyedeves, negyedevesSzamitas, kalkulalAdokat, eves_bevetel, kulfoldi_bev_osszeg]);
 
-  const { jovedelem, szja, tb_jarulék, szocho, hipa, afa, tranzakcios_illetek, konyvelo_koltseg, osszes_ado, ado_szazalek } = aktualisAdok;
+  const { jovedelem, szja, tb_jarulék, szocho, hipa, afa, tranzakcios_illetek, konyvelo_koltseg, szamlazo_koltseg, osszes_ado, ado_szazalek } = aktualisAdok;
 
   const isInitialMount = React.useRef(true);
 
@@ -526,34 +543,99 @@ export default function AtalanyadoDiagram() {
           </select>
         </div>
 
-        {/* Rejtett költségek */}
+        {/* Rejtett költségek toggle */}
         <div className="p-2 bg-gray-100 rounded flex flex-col justify-center">
-          <label className="flex items-center gap-2 cursor-pointer h-full">
-            <input 
-              type="checkbox"
-              checked={showHiddenCosts} 
-              onChange={(e) => setShowHiddenCosts(e.target.checked)}
-              className="w-4 h-4 text-gray-600 border-gray-300 rounded focus:ring-gray-500"
-            />
-            <span className="text-xs font-semibold text-gray-700">Rejtett költségek</span>
-          </label>
+          <button 
+            onClick={() => setShowHiddenCosts(!showHiddenCosts)}
+            className="flex items-center justify-between gap-2 w-full h-full text-xs font-semibold text-gray-700 hover:bg-gray-200 transition-colors p-1 rounded"
+          >
+            <span>Rejtett költségek</span>
+            <svg 
+              className={`w-4 h-4 transform transition-transform ${showHiddenCosts ? 'rotate-180' : ''}`} 
+              fill="none" 
+              stroke="currentColor" 
+              viewBox="0 0 24 24"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
         </div>
-
-        {/* Könyvelő díja (ha be van kapcsolva a rejtett költség) */}
-        {showHiddenCosts && (
-          <div className="p-2 bg-gray-50 rounded">
-            <label className="block text-xs font-semibold mb-1 text-gray-700">Könyvelő (Ft/hó)</label>
-            <input 
-              type="number"
-              value={konyveloHaviDij} 
-              onChange={(e) => setKonyveloHaviDij(Number(e.target.value))}
-              className="w-full p-1 text-sm border border-gray-300 rounded bg-white"
-              step="1000"
-              min="0"
-            />
-          </div>
-        )}
       </div>
+
+      {/* Rejtett költségek expansion */}
+      {showHiddenCosts && (
+        <div className="mb-4 p-4 bg-gray-50 border border-gray-200 rounded-lg animate-in fade-in slide-in-from-top-2 duration-200">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+            {/* Könyvelő */}
+            <div className="space-y-2">
+              <label className="flex items-center gap-2 cursor-pointer group">
+                <input 
+                  type="checkbox"
+                  checked={isKonyveloEnabled} 
+                  onChange={(e) => setIsKonyveloEnabled(e.target.checked)}
+                  className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                />
+                <span className="text-sm font-bold text-gray-700 group-hover:text-blue-600 transition-colors">Könyvelő</span>
+              </label>
+              {isKonyveloEnabled && (
+                <div className="ml-6">
+                  <label className="block text-[10px] text-gray-500 uppercase font-bold mb-1">Havi díj (Ft)</label>
+                  <input 
+                    type="number"
+                    value={konyveloHaviDij} 
+                    onChange={(e) => setKonyveloHaviDij(Number(e.target.value))}
+                    className="w-full p-2 text-sm border border-gray-300 rounded bg-white font-bold focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                    step="1000"
+                    min="0"
+                  />
+                </div>
+              )}
+            </div>
+
+            {/* Számlázó program */}
+            <div className="space-y-2">
+              <label className="flex items-center gap-2 cursor-pointer group">
+                <input 
+                  type="checkbox"
+                  checked={isSzamlazoEnabled} 
+                  onChange={(e) => setIsSzamlazoEnabled(e.target.checked)}
+                  className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                />
+                <span className="text-sm font-bold text-gray-700 group-hover:text-blue-600 transition-colors">Számlázó program</span>
+              </label>
+              {isSzamlazoEnabled && (
+                <div className="ml-6">
+                  <label className="block text-[10px] text-gray-500 uppercase font-bold mb-1">Havi díj (Ft)</label>
+                  <input 
+                    type="number"
+                    value={szamlazoHaviDij} 
+                    onChange={(e) => setSzamlazoHaviDij(Number(e.target.value))}
+                    className="w-full p-2 text-sm border border-gray-300 rounded bg-white font-bold focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                    step="500"
+                    min="0"
+                  />
+                </div>
+              )}
+            </div>
+
+            {/* Tranzakciós illeték */}
+            <div className="space-y-2">
+              <label className="flex items-center gap-2 cursor-pointer group">
+                <input 
+                  type="checkbox"
+                  checked={isTranzakcioEnabled} 
+                  onChange={(e) => setIsTranzakcioEnabled(e.target.checked)}
+                  className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                />
+                <span className="text-sm font-bold text-gray-700 group-hover:text-blue-600 transition-colors">Tranzakciós illeték (0.45%)</span>
+              </label>
+              <p className="ml-6 text-[10px] text-gray-500 italic">
+                A teljes bevétel után számolt banki/tranzakciós költség.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {ev === 2027 && (
         <p className="text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded p-3 mb-6">
@@ -774,17 +856,23 @@ export default function AtalanyadoDiagram() {
           <div className="text-sm font-bold text-teal-700">{formatCurrency(KAMARAI_HOZZAJARULAS)}</div>
         </div>
 
-        {showHiddenCosts && (
-          <>
-            <div className="p-2 bg-gray-100 rounded border border-gray-300">
-              <div className="text-xs text-gray-600 mb-0.5">Tranzakciós illeték (0.45%)</div>
-              <div className="text-sm font-bold text-gray-700">{formatCurrency(tranzakcios_illetek)}</div>
-            </div>
-            <div className="p-2 bg-gray-100 rounded border border-gray-300">
-              <div className="text-xs text-gray-600 mb-0.5">Könyvelő ({13 - indulasHonap} hó)</div>
-              <div className="text-sm font-bold text-gray-700">{formatCurrency(konyvelo_koltseg)}</div>
-            </div>
-          </>
+        {showHiddenCosts && isTranzakcioEnabled && (
+          <div className="p-2 bg-gray-100 rounded border border-gray-300">
+            <div className="text-xs text-gray-600 mb-0.5">Tranzakciós illeték</div>
+            <div className="text-sm font-bold text-gray-700">{formatCurrency(tranzakcios_illetek)}</div>
+          </div>
+        )}
+        {showHiddenCosts && isKonyveloEnabled && (
+          <div className="p-2 bg-gray-100 rounded border border-gray-300">
+            <div className="text-xs text-gray-600 mb-0.5">Könyvelő ({13 - indulasHonap} hó)</div>
+            <div className="text-sm font-bold text-gray-700">{formatCurrency(konyvelo_koltseg)}</div>
+          </div>
+        )}
+        {showHiddenCosts && isSzamlazoEnabled && (
+          <div className="p-2 bg-gray-100 rounded border border-gray-300">
+            <div className="text-xs text-gray-600 mb-0.5">Számlázó ({13 - indulasHonap} hó)</div>
+            <div className="text-sm font-bold text-gray-700">{formatCurrency(szamlazo_koltseg)}</div>
+          </div>
         )}
       </div>
 
@@ -812,7 +900,7 @@ export default function AtalanyadoDiagram() {
                   <td className="px-3 py-2 border border-gray-200 text-purple-600">{formatCurrency(n.tb_jarulék)}</td>
                   <td className="px-3 py-2 border border-gray-200 text-pink-600">{formatCurrency(n.szocho)}</td>
                   <td className="px-3 py-2 border border-gray-200 text-red-600">{formatCurrency(n.afa)}</td>
-                  <td className="px-3 py-2 border border-gray-200 font-bold text-gray-700">{formatCurrency(n.szja + n.tb_jarulék + n.szocho + n.afa + (n.tranzakcios_illetek || 0) + (n.konyvelo_koltseg || 0))}</td>
+                  <td className="px-3 py-2 border border-gray-200 font-bold text-gray-700">{formatCurrency(n.szja + n.tb_jarulék + n.szocho + n.afa + (n.tranzakcios_illetek || 0) + (n.konyvelo_koltseg || 0) + (n.szamlazo_koltseg || 0))}</td>
                 </tr>
               ))}
             </tbody>
@@ -822,25 +910,40 @@ export default function AtalanyadoDiagram() {
 
       {/* Rejtett költségek részletezése az összesítés felett */}
       {showHiddenCosts && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
-          <div className="p-3 bg-gray-50 rounded border border-gray-200 flex justify-between items-center">
-            <div>
-              <div className="text-xs text-gray-600 font-semibold uppercase tracking-wider">Tranzakciós illeték (0.45%)</div>
-              <div className="text-lg font-bold text-gray-800">{formatCurrency(tranzakcios_illetek)}</div>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
+          {isTranzakcioEnabled && (
+            <div className="p-3 bg-gray-50 rounded border border-gray-200 flex justify-between items-center">
+              <div>
+                <div className="text-xs text-gray-600 font-semibold uppercase tracking-wider">Tranzakciós illeték (0.45%)</div>
+                <div className="text-lg font-bold text-gray-800">{formatCurrency(tranzakcios_illetek)}</div>
+              </div>
+              <div className="text-right text-[10px] text-gray-500 italic max-w-[100px]">
+                Banki tranzakciós költség
+              </div>
             </div>
-            <div className="text-right text-[10px] text-gray-500 italic max-w-[150px]">
-              A teljes bevétel után számolt banki/tranzakciós költség
+          )}
+          {isKonyveloEnabled && (
+            <div className="p-3 bg-gray-50 rounded border border-gray-200 flex justify-between items-center">
+              <div>
+                <div className="text-xs text-gray-600 font-semibold uppercase tracking-wider">Könyvelő díja ({13 - indulasHonap} hó)</div>
+                <div className="text-lg font-bold text-gray-800">{formatCurrency(konyvelo_koltseg)}</div>
+              </div>
+              <div className="text-right text-[10px] text-gray-500 italic max-w-[100px]">
+                {formatCurrency(konyveloHaviDij)}/hó
+              </div>
             </div>
-          </div>
-          <div className="p-3 bg-gray-50 rounded border border-gray-200 flex justify-between items-center">
-            <div>
-              <div className="text-xs text-gray-600 font-semibold uppercase tracking-wider">Könyvelő díja ({13 - indulasHonap} hónap)</div>
-              <div className="text-lg font-bold text-gray-800">{formatCurrency(konyvelo_koltseg)}</div>
+          )}
+          {isSzamlazoEnabled && (
+            <div className="p-3 bg-gray-50 rounded border border-gray-200 flex justify-between items-center">
+              <div>
+                <div className="text-xs text-gray-600 font-semibold uppercase tracking-wider">Számlázó ({13 - indulasHonap} hó)</div>
+                <div className="text-lg font-bold text-gray-800">{formatCurrency(szamlazo_koltseg)}</div>
+              </div>
+              <div className="text-right text-[10px] text-gray-500 italic max-w-[100px]">
+                {formatCurrency(szamlazoHaviDij)}/hó
+              </div>
             </div>
-            <div className="text-right text-[10px] text-gray-500 italic max-w-[150px]">
-              {formatCurrency(konyveloHaviDij)} Ft/hó díjjal számolva
-            </div>
-          </div>
+          )}
         </div>
       )}
 

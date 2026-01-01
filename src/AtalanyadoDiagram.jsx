@@ -42,6 +42,7 @@ export default function AtalanyadoDiagram() {
   const [isNegyedeves, setIsNegyedeves] = useState(false);
   const [negyedevesBevetelek, setNegyedevesBevetelek] = useState([0, 0, 0, 0]);
   const [negyedevesKulfoldiBevetelek, setNegyedevesKulfoldiBevetelek] = useState([0, 0, 0, 0]);
+  const [isSzjaMentes, setIsSzjaMentes] = useState(false);
   
   // Rejtett költségek
   const [showHiddenCosts, setShowHiddenCosts] = useState(false);
@@ -179,7 +180,7 @@ export default function AtalanyadoDiagram() {
       // Göngyölített SZJA
       const adokot_jov_eddig = Math.max(0, osszes_jovedelem_eddig - ADÓMENTES_JÖVEDELEM);
       const szja_alap_negyedev = adokot_jov_eddig - elozo_szja_alap;
-      const szja_val = Math.round(szja_alap_negyedev * 0.15);
+      const szja_val = isSzjaMentes ? 0 : Math.round(szja_alap_negyedev * 0.15);
       elozo_szja_alap = adokot_jov_eddig;
 
       // Göngyölített ÁFA
@@ -263,14 +264,14 @@ export default function AtalanyadoDiagram() {
       osszes_szamlazo,
       osszes_tranzakcio
     };
-  }, [negyedevesBevetelek, negyedevesKulfoldiBevetelek, koltseg_hanyad, ADÓMENTES_JÖVEDELEM, jogviszony, alkalmazott_minimalber, ev, honapokNegyedenkent, aranyositott_afa_limit, showHiddenCosts, isKonyveloEnabled, konyveloHaviDij, isSzamlazoEnabled, szamlazoHaviDij, isTranzakcioEnabled]);
+  }, [negyedevesBevetelek, negyedevesKulfoldiBevetelek, koltseg_hanyad, ADÓMENTES_JÖVEDELEM, jogviszony, alkalmazott_minimalber, ev, honapokNegyedenkent, aranyositott_afa_limit, showHiddenCosts, isKonyveloEnabled, konyveloHaviDij, isSzamlazoEnabled, szamlazoHaviDij, isTranzakcioEnabled, isSzjaMentes]);
 
   // Központi számítási logika (unifikálva)
   const kalkulalAdokat = useMemo(() => {
     return (bev, kulfoldi_bev) => {
       const jov = bev * (1 - koltseg_hanyad / 100);
       const adokot_jov = Math.max(0, jov - ADÓMENTES_JÖVEDELEM);
-      const szja_val = Math.round(adokot_jov * 0.15);
+      const szja_val = isSzjaMentes ? 0 : Math.round(adokot_jov * 0.15);
       
       let tb_val = 0;
       let szoc_val = 0;
@@ -329,7 +330,7 @@ export default function AtalanyadoDiagram() {
         ado_szazalek: bev > 0 ? (ossz / bev) * 100 : 0
       };
     };
-  }, [koltseg_hanyad, ADÓMENTES_JÖVEDELEM, jogviszony, alkalmazott_minimalber, ev, aranyositoTenyezo, hipaKulcs, aranyositott_afa_limit, showHiddenCosts, isKonyveloEnabled, konyveloHaviDij, isSzamlazoEnabled, szamlazoHaviDij, isTranzakcioEnabled, indulasHonap]);
+  }, [koltseg_hanyad, ADÓMENTES_JÖVEDELEM, jogviszony, alkalmazott_minimalber, ev, aranyositoTenyezo, hipaKulcs, aranyositott_afa_limit, showHiddenCosts, isKonyveloEnabled, konyveloHaviDij, isSzamlazoEnabled, szamlazoHaviDij, isTranzakcioEnabled, indulasHonap, isSzjaMentes]);
 
   // Jelenlegi adatok kiszámítása az aktuális bevételre
   const aktualisAdok = useMemo(() => {
@@ -459,7 +460,7 @@ export default function AtalanyadoDiagram() {
       <p className="text-gray-600 mb-1">Részletes beállításokkal - naprakész számítás</p>
 
       {/* Beállítások */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 mb-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-2 mb-4">
         
         {/* Év */}
         <div className="p-2 bg-gray-50 rounded">
@@ -541,6 +542,19 @@ export default function AtalanyadoDiagram() {
             <option value={1}>1%</option>
             <option value={2}>2%</option>
           </select>
+        </div>
+
+        {/* SZJA mentesség */}
+        <div className="p-2 bg-yellow-50 rounded flex flex-col justify-center">
+          <label className="flex items-center gap-2 cursor-pointer group">
+            <input 
+              type="checkbox"
+              checked={isSzjaMentes} 
+              onChange={(e) => setIsSzjaMentes(e.target.checked)}
+              className="w-4 h-4 text-yellow-600 border-gray-300 rounded focus:ring-yellow-500"
+            />
+            <span className="text-xs font-semibold text-gray-700 group-hover:text-yellow-700 transition-colors">SZJA mentes</span>
+          </label>
         </div>
 
         {/* Rejtett költségek toggle */}
@@ -826,9 +840,13 @@ export default function AtalanyadoDiagram() {
 
       {/* Adók és járulékok */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 mb-4">
-        <div className="p-2 bg-orange-50 rounded border border-orange-200">
-          <div className="text-xs text-gray-600 mb-0.5">SZJA (15%)</div>
-          <div className="text-sm font-bold text-orange-700">{formatCurrency(szja)}</div>
+        <div className={`p-2 rounded border ${isSzjaMentes ? 'bg-green-50 border-green-200' : 'bg-orange-50 border-orange-200'}`}>
+          <div className="text-xs text-gray-600 mb-0.5">
+            SZJA {isSzjaMentes ? '(mentes)' : '(15%)'}
+          </div>
+          <div className={`text-sm font-bold ${isSzjaMentes ? 'text-green-700' : 'text-orange-700'}`}>
+            {formatCurrency(szja)}
+          </div>
         </div>
         
         <div className="p-2 bg-purple-50 rounded border border-purple-200">
@@ -956,7 +974,9 @@ export default function AtalanyadoDiagram() {
         
         <div className="p-4 bg-yellow-50 rounded border-2 border-yellow-200">
           <div className="text-sm text-gray-600 mb-0.5">SZJA mentes jövedelem keret</div>
-          <div className="text-2xl font-bold text-yellow-700">{formatCurrency(ADÓMENTES_JÖVEDELEM)}</div>
+          <div className="text-2xl font-bold text-yellow-700">
+            {isSzjaMentes ? '∞' : formatCurrency(ADÓMENTES_JÖVEDELEM)}
+          </div>
         </div>
 
         <div className="col-span-2 sm:col-span-2 p-4 bg-red-50 rounded border-2 border-red-300">

@@ -545,35 +545,26 @@ export default function AtalanyadoDiagram() {
         </div>
 
         {/* SZJA mentesség */}
-        <div className="p-2 bg-yellow-50 rounded flex flex-col justify-center">
-          <label className="flex items-center gap-2 cursor-pointer group">
-            <input 
-              type="checkbox"
-              checked={isSzjaMentes} 
-              onChange={(e) => setIsSzjaMentes(e.target.checked)}
-              className="w-4 h-4 text-yellow-600 border-gray-300 rounded focus:ring-yellow-500"
-            />
-            <span className="text-xs font-semibold text-gray-700 group-hover:text-yellow-700 transition-colors">SZJA mentes</span>
-          </label>
-        </div>
+        <label className="p-2 bg-yellow-50 rounded flex items-center gap-2 cursor-pointer group">
+          <input 
+            type="checkbox"
+            checked={isSzjaMentes} 
+            onChange={(e) => setIsSzjaMentes(e.target.checked)}
+            className="w-4 h-4 text-yellow-600 border-gray-300 rounded focus:ring-yellow-500"
+          />
+          <span className="text-xs font-semibold text-gray-700 group-hover:text-yellow-700 transition-colors">SZJA mentes</span>
+        </label>
 
         {/* Rejtett költségek toggle */}
-        <div className="p-2 bg-gray-100 rounded flex flex-col justify-center">
-          <button 
-            onClick={() => setShowHiddenCosts(!showHiddenCosts)}
-            className="flex items-center justify-between gap-2 w-full h-full text-xs font-semibold text-gray-700 hover:bg-gray-200 transition-colors p-1 rounded"
-          >
-            <span>Rejtett költségek</span>
-            <svg 
-              className={`w-4 h-4 transform transition-transform ${showHiddenCosts ? 'rotate-180' : ''}`} 
-              fill="none" 
-              stroke="currentColor" 
-              viewBox="0 0 24 24"
-            >
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-            </svg>
-          </button>
-        </div>
+        <label className="p-2 bg-gray-100 rounded flex items-center gap-2 cursor-pointer group text-xs font-semibold text-gray-700 hover:bg-gray-200 transition-colors">
+          <input 
+            type="checkbox"
+            checked={showHiddenCosts} 
+            onChange={(e) => setShowHiddenCosts(e.target.checked)}
+            className="w-4 h-4 text-gray-600 border-gray-300 rounded focus:ring-gray-500 group-hover:text-gray-900 transition-colors"
+          />
+          <span>Rejtett költségek</span>
+        </label>
       </div>
 
       {/* Rejtett költségek expansion */}

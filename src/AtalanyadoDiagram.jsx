@@ -467,12 +467,12 @@ export default function AtalanyadoDiagram() {
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-2 mb-4">
         
         {/* Év */}
-        <div className="p-2 bg-gray-50 rounded">
-          <label className="block text-xs font-semibold mb-1 text-gray-700">Év</label>
+        <div className="p-2 bg-slate-50 rounded border border-slate-200">
+          <label className="block text-xs font-semibold mb-1 text-slate-700">Év</label>
           <select 
             value={ev} 
             onChange={(e) => setEv(Number(e.target.value))}
-            className="w-full p-1.5 text-sm border border-gray-300 rounded bg-white"
+            className="w-full p-1.5 text-sm border border-slate-300 rounded bg-white"
           >
             <option value={2025}>2025</option>
             <option value={2026}>2026</option>
@@ -481,12 +481,12 @@ export default function AtalanyadoDiagram() {
         </div>
 
         {/* Jogviszony típusa */}
-        <div className="p-2 bg-blue-50 rounded">
-          <label className="block text-xs font-semibold mb-1 text-gray-700">Jogviszony</label>
+        <div className="p-2 bg-slate-50 rounded border border-slate-200">
+          <label className="block text-xs font-semibold mb-1 text-slate-700">Jogviszony</label>
           <select 
             value={jogviszony} 
             onChange={(e) => setJogviszony(e.target.value)}
-            className="w-full p-1.5 text-sm border border-blue-300 rounded bg-white"
+            className="w-full p-1.5 text-sm border border-slate-300 rounded bg-white"
           >
             <option value="fofoglalkozu_min">Főfoglalkozású minimálbér</option>
             <option value="fofoglalkozu_gar">Főfoglalkozású garantált bérminimum (szakképesítéshez kötött munka esetén)</option>
@@ -496,12 +496,12 @@ export default function AtalanyadoDiagram() {
         </div>
 
         {/* Költséghányad */}
-        <div className="p-2 bg-green-50 rounded">
-          <label className="block text-xs font-semibold mb-1 text-gray-700">Költséghányad</label>
+        <div className="p-2 bg-slate-50 rounded border border-slate-200">
+          <label className="block text-xs font-semibold mb-1 text-slate-700">Költséghányad</label>
           <select 
             value={koltseg_hanyad} 
             onChange={(e) => setKoltsegHanyad(Number(e.target.value))}
-            className="w-full p-1.5 text-sm border border-green-300 rounded bg-white"
+            className="w-full p-1.5 text-sm border border-slate-300 rounded bg-white"
           >
             {getKoltsegHanyadok(ev).map((hanyad) => (
               <option key={hanyad} value={hanyad}>
@@ -512,12 +512,12 @@ export default function AtalanyadoDiagram() {
         </div>
 
         {/* Indulás hónapja */}
-        <div className="p-2 bg-orange-50 rounded">
-          <label className="block text-xs font-semibold mb-1 text-gray-700">Indulás</label>
+        <div className="p-2 bg-slate-50 rounded border border-slate-200">
+          <label className="block text-xs font-semibold mb-1 text-slate-700">Indulás</label>
           <select 
             value={indulasHonap} 
             onChange={(e) => setIndulasHonap(Number(e.target.value))}
-            className="w-full p-1.5 text-sm border border-orange-300 rounded bg-white"
+            className="w-full p-1.5 text-sm border border-slate-300 rounded bg-white"
           >
             <option value={1}>Január</option>
             <option value={2}>Február</option>
@@ -535,12 +535,12 @@ export default function AtalanyadoDiagram() {
         </div>
 
         {/* HIPA kulcs */}
-        <div className="p-2 bg-pink-50 rounded">
-          <label className="block text-xs font-semibold mb-1 text-gray-700">HIPA</label>
+        <div className="p-2 bg-slate-50 rounded border border-slate-200">
+          <label className="block text-xs font-semibold mb-1 text-slate-700">HIPA</label>
           <select 
             value={hipaKulcs} 
             onChange={(e) => setHipaKulcs(Number(e.target.value))}
-            className="w-full p-1.5 text-sm border border-pink-300 rounded bg-white"
+            className="w-full p-1.5 text-sm border border-slate-300 rounded bg-white"
           >
             <option value={0}>0%</option>
             <option value={1}>1%</option>
@@ -549,40 +549,31 @@ export default function AtalanyadoDiagram() {
         </div>
 
         {/* SZJA mentesség */}
-        <div className="p-2 bg-yellow-50 rounded flex flex-col justify-center">
-          <label className="flex items-center gap-2 cursor-pointer group">
-            <input 
-              type="checkbox"
-              checked={isSzjaMentes} 
-              onChange={(e) => setIsSzjaMentes(e.target.checked)}
-              className="w-4 h-4 text-yellow-600 border-gray-300 rounded focus:ring-yellow-500"
-            />
-            <span className="text-xs font-semibold text-gray-700 group-hover:text-yellow-700 transition-colors">SZJA mentes</span>
-          </label>
-        </div>
+        <label className="p-2 bg-slate-50 rounded border border-slate-200 flex items-center gap-2 cursor-pointer group hover:bg-slate-100 transition-colors">
+          <input 
+            type="checkbox"
+            checked={isSzjaMentes} 
+            onChange={(e) => setIsSzjaMentes(e.target.checked)}
+            className="w-4 h-4 text-blue-600 border-slate-300 rounded focus:ring-blue-500"
+          />
+          <span className="text-xs font-semibold text-slate-700 transition-colors">SZJA mentes</span>
+        </label>
 
         {/* Rejtett költségek toggle */}
-        <div className="p-2 bg-gray-100 rounded flex flex-col justify-center">
-          <button 
-            onClick={() => setShowHiddenCosts(!showHiddenCosts)}
-            className="flex items-center justify-between gap-2 w-full h-full text-xs font-semibold text-gray-700 hover:bg-gray-200 transition-colors p-1 rounded"
-          >
-            <span>Rejtett költségek</span>
-            <svg 
-              className={`w-4 h-4 transform transition-transform ${showHiddenCosts ? 'rotate-180' : ''}`} 
-              fill="none" 
-              stroke="currentColor" 
-              viewBox="0 0 24 24"
-            >
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-            </svg>
-          </button>
-        </div>
+        <label className="p-2 bg-slate-50 rounded border border-slate-200 flex items-center gap-2 cursor-pointer group text-xs font-semibold text-slate-700 hover:bg-slate-100 transition-colors">
+          <input 
+            type="checkbox"
+            checked={showHiddenCosts} 
+            onChange={(e) => setShowHiddenCosts(e.target.checked)}
+            className="w-4 h-4 text-blue-600 border-slate-300 rounded focus:ring-blue-500"
+          />
+          <span>Rejtett költségek</span>
+        </label>
       </div>
 
       {/* Rejtett költségek expansion */}
       {showHiddenCosts && (
-        <div className="mb-4 p-4 bg-gray-50 border border-gray-200 rounded-lg animate-in fade-in slide-in-from-top-2 duration-200">
+        <div className="mb-4 p-4 bg-slate-50 border border-slate-200 rounded-lg animate-in fade-in slide-in-from-top-2 duration-200">
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
             {/* Könyvelő */}
             <div className="space-y-2">
@@ -591,18 +582,18 @@ export default function AtalanyadoDiagram() {
                   type="checkbox"
                   checked={isKonyveloEnabled} 
                   onChange={(e) => setIsKonyveloEnabled(e.target.checked)}
-                  className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                  className="w-4 h-4 text-blue-600 border-slate-300 rounded focus:ring-blue-500"
                 />
-                <span className="text-sm font-bold text-gray-700 group-hover:text-blue-600 transition-colors">Könyvelő</span>
+                <span className="text-sm font-bold text-slate-700 group-hover:text-blue-600 transition-colors">Könyvelő</span>
               </label>
               {isKonyveloEnabled && (
                 <div className="ml-6">
-                  <label className="block text-[10px] text-gray-500 uppercase font-bold mb-1">Havi díj (Ft)</label>
+                  <label className="block text-[10px] text-slate-500 uppercase font-bold mb-1">Havi díj (Ft)</label>
                   <input 
                     type="number"
                     value={konyveloHaviDij} 
                     onChange={(e) => setKonyveloHaviDij(Number(e.target.value))}
-                    className="w-full p-2 text-sm border border-gray-300 rounded bg-white font-bold focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                    className="w-full p-2 text-sm border border-slate-300 rounded bg-white font-bold focus:ring-2 focus:ring-blue-500 focus:outline-none"
                     step="1000"
                     min="0"
                   />
@@ -617,18 +608,18 @@ export default function AtalanyadoDiagram() {
                   type="checkbox"
                   checked={isSzamlazoEnabled} 
                   onChange={(e) => setIsSzamlazoEnabled(e.target.checked)}
-                  className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                  className="w-4 h-4 text-blue-600 border-slate-300 rounded focus:ring-blue-500"
                 />
-                <span className="text-sm font-bold text-gray-700 group-hover:text-blue-600 transition-colors">Számlázó program</span>
+                <span className="text-sm font-bold text-slate-700 group-hover:text-blue-600 transition-colors">Számlázó program</span>
               </label>
               {isSzamlazoEnabled && (
                 <div className="ml-6">
-                  <label className="block text-[10px] text-gray-500 uppercase font-bold mb-1">Havi díj (Ft)</label>
+                  <label className="block text-[10px] text-slate-500 uppercase font-bold mb-1">Havi díj (Ft)</label>
                   <input 
                     type="number"
                     value={szamlazoHaviDij} 
                     onChange={(e) => setSzamlazoHaviDij(Number(e.target.value))}
-                    className="w-full p-2 text-sm border border-gray-300 rounded bg-white font-bold focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                    className="w-full p-2 text-sm border border-slate-300 rounded bg-white font-bold focus:ring-2 focus:ring-blue-500 focus:outline-none"
                     step="500"
                     min="0"
                   />
@@ -643,11 +634,11 @@ export default function AtalanyadoDiagram() {
                   type="checkbox"
                   checked={isTranzakcioEnabled} 
                   onChange={(e) => setIsTranzakcioEnabled(e.target.checked)}
-                  className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                  className="w-4 h-4 text-blue-600 border-slate-300 rounded focus:ring-blue-500"
                 />
-                <span className="text-sm font-bold text-gray-700 group-hover:text-blue-600 transition-colors">Tranzakciós illeték (0.45%)</span>
+                <span className="text-sm font-bold text-slate-700 group-hover:text-blue-600 transition-colors">Tranzakciós illeték (0.45%)</span>
               </label>
-              <p className="ml-6 text-[10px] text-gray-500 italic">
+              <p className="ml-6 text-[10px] text-slate-500 italic">
                 A teljes bevétel után számolt banki/tranzakciós költség.
               </p>
             </div>
@@ -663,37 +654,37 @@ export default function AtalanyadoDiagram() {
 
       {/* Bevételi limit infó */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-4">
-        <div className="p-2 bg-red-50 rounded border border-red-200 text-xs">
+        <div className="p-2 bg-amber-50 rounded border border-amber-300 text-xs">
           <div className="flex justify-between items-center">
-            <span className="font-semibold text-gray-700">Átalányadó keret:</span>
-            <span className="font-bold text-red-700">{formatCurrency(aranyositott_limit)}</span>
+            <span className="font-semibold text-slate-700">Átalányadó keret:</span>
+            <span className="font-bold text-amber-700">{formatCurrency(aranyositott_limit)}</span>
           </div>
-          <p className="text-gray-600 mt-0.5">
+          <p className="text-slate-600 mt-0.5">
             {mukodesiNapok} nap ({honapNevek[indulasHonap - 1]}–Dec) • Max: {formatCurrency(MAX_BEVETEL)}
           </p>
         </div>
-        <div className="p-2 bg-pink-50 rounded border border-pink-200 text-xs">
+        <div className="p-2 bg-amber-50 rounded border border-amber-300 text-xs">
           <div className="flex justify-between items-center">
-            <span className="font-semibold text-gray-700">Alanyi áfa-mentes keret:</span>
-            <span className="font-bold text-pink-700"> {formatCurrency(aranyositott_afa_limit)}</span>
+            <span className="font-semibold text-slate-700">Alanyi áfa-mentes keret:</span>
+            <span className="font-bold text-amber-700"> {formatCurrency(aranyositott_afa_limit)}</span>
           </div>
-          <p className="text-gray-600 mt-0.5">
+          <p className="text-slate-600 mt-0.5">
             {mukodesiNapok} nap ({honapNevek[indulasHonap - 1]}–Dec) • Max: {formatCurrency(ev === 2025 ? AFA_LIMIT_2025 : (ev === 2026 ? AFA_LIMIT_2026 : AFA_LIMIT_2027))}
           </p>
-          {/* <p className="text-gray-600 mt-0.5">
+          {/* <p className="text-slate-600 mt-0.5">
           Belföldi (ÁFA-számító) bevétel: {formatCurrency(Math.max(0, eves_bevetel - kulfoldi_bev_osszeg))}
           </p> */}
         </div>
       </div>
 
       {/* Bevétel beállítás */}
-      <div className="mb-4 p-4 bg-blue-50 rounded">
+      <div className="mb-4 p-4 bg-slate-50 rounded border border-slate-200">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
-          <div className="flex items-center gap-3 p-2 bg-blue-100 rounded-lg">
-            <label className="text-sm font-bold text-blue-800">Negyedéves bontás</label>
+          <div className="flex items-center gap-3 p-2 bg-white rounded-lg border border-slate-300">
+            <label className="text-sm font-bold text-slate-800">Negyedéves bontás</label>
             <button 
               onClick={() => setIsNegyedeves(!isNegyedeves)}
-              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${isNegyedeves ? 'bg-blue-600' : 'bg-gray-400'}`}
+              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${isNegyedeves ? 'bg-blue-600' : 'bg-slate-400'}`}
             >
               <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${isNegyedeves ? 'translate-x-6' : 'translate-x-1'}`} />
             </button>
@@ -701,18 +692,18 @@ export default function AtalanyadoDiagram() {
           
           {!isNegyedeves && (
             <div className="flex-1 flex justify-end">
-              <div className="bg-blue-100 px-4 py-2 rounded-lg border border-blue-200">
-                <span className="text-sm text-blue-700 font-medium">Összes éves bevétel: </span>
-                <span className="text-lg font-bold text-blue-900">{formatCurrency(eves_bevetel)}</span>
+              <div className="bg-white px-4 py-2 rounded-lg border border-slate-300">
+                <span className="text-sm text-slate-700 font-medium">Összes éves bevétel: </span>
+                <span className="text-lg font-bold text-slate-900">{formatCurrency(eves_bevetel)}</span>
               </div>
             </div>
           )}
           
           {isNegyedeves && (
             <div className="flex-1 flex justify-end">
-              <div className="bg-green-100 px-4 py-2 rounded-lg border border-green-200">
-                <span className="text-sm text-green-700 font-medium">Negyedévek összesen: </span>
-                <span className="text-lg font-bold text-green-900">{formatCurrency(negyedevesSzamitas.osszes_bevetel)}</span>
+              <div className="bg-white px-4 py-2 rounded-lg border border-slate-300">
+                <span className="text-sm text-slate-700 font-medium">Negyedévek összesen: </span>
+                <span className="text-lg font-bold text-slate-900">{formatCurrency(negyedevesSzamitas.osszes_bevetel)}</span>
               </div>
             </div>
           )}
@@ -721,7 +712,7 @@ export default function AtalanyadoDiagram() {
         {!isNegyedeves ? (
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-3">
             <div className="flex-1">
-              <h2 className="text-lg font-semibold mb-2 text-gray-800">Éves összes bevétel</h2>
+              <h2 className="text-lg font-semibold mb-2 text-slate-800">Éves összes bevétel</h2>
               <div className="flex gap-3 items-center">
                 <input
                   type="number"
@@ -730,15 +721,15 @@ export default function AtalanyadoDiagram() {
                   step="500000"
                   value={eves_bevetel}
                   onChange={(e) => setEvesBevetel(Math.min(Number(e.target.value), aranyositott_limit))}
-                  className="w-48 p-2 text-lg font-bold border-2 border-blue-300 rounded"
+                  className="w-48 p-2 text-lg font-bold border-2 border-blue-300 rounded focus:ring-2 focus:ring-blue-500 focus:outline-none"
                 />
-                <span className="text-gray-600">Ft</span>
+                <span className="text-slate-600">Ft</span>
               </div>
             </div>
 
             {eves_bevetel > aranyositott_afa_limit && (
-              <div className="flex-1 p-3 bg-yellow-100 rounded border border-yellow-300 animate-in fade-in slide-in-from-top-2 duration-300">
-                <label className="block text-xs font-bold mb-1 text-yellow-800 uppercase tracking-wider">
+              <div className="flex-1 p-3 bg-amber-50 rounded border border-amber-300 animate-in fade-in slide-in-from-top-2 duration-300">
+                <label className="block text-xs font-bold mb-1 text-amber-800 uppercase tracking-wider">
                   Ebből külföldi (ÁFA-mentes) rész:
                 </label>
                 <div className="flex gap-2 items-center">
@@ -750,11 +741,11 @@ export default function AtalanyadoDiagram() {
                       step="500000"
                       value={kulfoldi_bev_osszeg}
                       onChange={(e) => setKulfoldiBevOsszeg(Math.min(eves_bevetel, Number(e.target.value)))}
-                      className="w-full p-2 text-lg border-2 border-yellow-400 rounded bg-white font-bold text-yellow-700 focus:ring-2 focus:ring-yellow-500 focus:outline-none"
+                      className="w-full p-2 text-lg border-2 border-amber-400 rounded bg-white font-bold text-amber-700 focus:ring-2 focus:ring-amber-500 focus:outline-none"
                     />
-                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-yellow-600 font-bold">Ft</span>
+                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-amber-600 font-bold">Ft</span>
                   </div>
-                  <div className="bg-yellow-200 px-3 py-2 rounded font-bold text-yellow-800 text-lg min-w-[65px] text-center border-2 border-yellow-300">
+                  <div className="bg-amber-100 px-3 py-2 rounded font-bold text-amber-800 text-lg min-w-[65px] text-center border-2 border-amber-300">
                     {eves_bevetel > 0 ? ((kulfoldi_bev_osszeg / eves_bevetel) * 100).toFixed(0) : 0}%
                   </div>
                 </div>
@@ -765,7 +756,7 @@ export default function AtalanyadoDiagram() {
                   step="500000"
                   value={kulfoldi_bev_osszeg}
                   onChange={(e) => setKulfoldiBevOsszeg(Number(e.target.value))}
-                  className="w-full h-1.5 bg-yellow-300 rounded-lg appearance-none cursor-pointer mt-3 accent-yellow-600"
+                  className="w-full h-1.5 bg-amber-200 rounded-lg appearance-none cursor-pointer mt-3 accent-amber-600"
                 />
               </div>
             )}
@@ -774,14 +765,14 @@ export default function AtalanyadoDiagram() {
           <div className="space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               {[0, 1, 2, 3].map((i) => (
-                <div key={i} className={`p-3 rounded border-2 ${honapokNegyedenkent[i] > 0 ? 'bg-white border-blue-200' : 'bg-gray-100 border-gray-200 opacity-60'}`}>
+                <div key={i} className={`p-3 rounded border-2 ${honapokNegyedenkent[i] > 0 ? 'bg-white border-blue-300' : 'bg-slate-100 border-slate-200 opacity-60'}`}>
                   <div className="flex justify-between items-center mb-2">
-                    <label className="text-sm font-bold text-gray-700">{i + 1}. negyedév</label>
-                    <span className="text-[10px] text-gray-500 font-medium">{honapokNegyedenkent[i]} hónap</span>
+                    <label className="text-sm font-bold text-slate-700">{i + 1}. negyedév</label>
+                    <span className="text-[10px] text-slate-500 font-medium">{honapokNegyedenkent[i]} hónap</span>
                   </div>
                   <div className="space-y-3">
                     <div>
-                      <label className="block text-[10px] text-gray-500 uppercase font-bold mb-1">Bevétel (Ft)</label>
+                      <label className="block text-[10px] text-slate-500 uppercase font-bold mb-1">Bevétel (Ft)</label>
                       <input
                         type="number"
                         min="0"
@@ -792,12 +783,12 @@ export default function AtalanyadoDiagram() {
                           newBevs[i] = Number(e.target.value);
                           setNegyedevesBevetelek(newBevs);
                         }}
-                        className="w-full p-1.5 text-sm font-bold border border-gray-300 rounded focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none"
+                        className="w-full p-1.5 text-sm font-bold border border-slate-300 rounded focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none"
                       />
                     </div>
                     {negyedevesSzamitas.osszes_bevetel > aranyositott_afa_limit && (
                       <div className="animate-in fade-in slide-in-from-top-1 duration-300">
-                        <label className="block text-[10px] text-yellow-700 uppercase font-bold mb-1">Ebből külföldi (Ft)</label>
+                        <label className="block text-[10px] text-amber-700 uppercase font-bold mb-1">Ebből külföldi (Ft)</label>
                         <input
                           type="number"
                           min="0"
@@ -809,7 +800,7 @@ export default function AtalanyadoDiagram() {
                             newKulfBevs[i] = Math.min(negyedevesBevetelek[i], Number(e.target.value));
                             setNegyedevesKulfoldiBevetelek(newKulfBevs);
                           }}
-                          className="w-full p-1.5 text-sm font-bold border border-yellow-300 rounded focus:border-yellow-500 focus:ring-1 focus:ring-yellow-500 outline-none"
+                          className="w-full p-1.5 text-sm font-bold border border-amber-300 rounded focus:border-amber-500 focus:ring-1 focus:ring-amber-500 outline-none"
                         />
                       </div>
                     )}
@@ -818,7 +809,7 @@ export default function AtalanyadoDiagram() {
               ))}
             </div>
             {negyedevesSzamitas.osszes_bevetel > aranyositott_afa_limit && (
-              <p className="text-[10px] text-yellow-700 font-medium italic bg-yellow-50 p-2 rounded border border-yellow-200">
+              <p className="text-[10px] text-amber-700 font-medium italic bg-amber-50 p-2 rounded border border-amber-200">
                 Mivel az összbevételed meghaladja az ÁFA keretet, megadhatod a külföldi (ÁFA-mentes) részt, ami csökkenti a belföldi ÁFA-alapot.
               </p>
             )}
@@ -833,67 +824,67 @@ export default function AtalanyadoDiagram() {
             step="500000"
             value={Math.min(eves_bevetel, aranyositott_limit)}
             onChange={(e) => setEvesBevetel(Number(e.target.value))}
-            className="w-full h-2 bg-blue-200 rounded-lg appearance-none cursor-pointer mt-4"
+            className="w-full h-2 bg-blue-200 rounded-lg appearance-none cursor-pointer mt-4 accent-blue-600"
           />
         )}
         
         {((!isNegyedeves && eves_bevetel > aranyositott_limit) || (isNegyedeves && negyedevesSzamitas.osszes_bevetel > aranyositott_limit)) && (
-          <p className="text-center text-red-600 font-semibold mt-2 text-sm">⚠️ Túllépi az arányosított limitet!</p>
+          <p className="text-center text-rose-600 font-semibold mt-2 text-sm">⚠️ Túllépi az arányosított limitet!</p>
         )}
       </div>
 
       {/* Adók és járulékok */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 mb-4">
-        <div className={`p-2 rounded border ${isSzjaMentes ? 'bg-green-50 border-green-200' : 'bg-orange-50 border-orange-200'}`}>
-          <div className="text-xs text-gray-600 mb-0.5">
+        <div className={`p-2 rounded border ${isSzjaMentes ? 'bg-emerald-50 border-emerald-300' : 'bg-blue-50 border-blue-300'}`}>
+          <div className="text-xs text-slate-600 mb-0.5">
             SZJA {isSzjaMentes ? '(mentes)' : '(15%)'}
           </div>
-          <div className={`text-sm font-bold ${isSzjaMentes ? 'text-green-700' : 'text-orange-700'}`}>
+          <div className={`text-sm font-bold ${isSzjaMentes ? 'text-emerald-700' : 'text-blue-700'}`}>
             {formatCurrency(szja)}
           </div>
         </div>
         
-        <div className="p-2 bg-purple-50 rounded border border-purple-200">
-          <div className="text-xs text-gray-600 mb-0.5">TB járulék</div>
-          <div className="text-sm font-bold text-purple-700">{formatCurrency(tb_jarulék)}</div>
+        <div className="p-2 bg-blue-50 rounded border border-blue-300">
+          <div className="text-xs text-slate-600 mb-0.5">TB járulék</div>
+          <div className="text-sm font-bold text-blue-700">{formatCurrency(tb_jarulék)}</div>
         </div>
         
-        <div className="p-2 bg-pink-50 rounded border border-pink-200">
-          <div className="text-xs text-gray-600 mb-0.5">SZOCHO</div>
-          <div className="text-sm font-bold text-pink-700">{formatCurrency(szocho)}</div>
+        <div className="p-2 bg-blue-50 rounded border border-blue-300">
+          <div className="text-xs text-slate-600 mb-0.5">SZOCHO</div>
+          <div className="text-sm font-bold text-blue-700">{formatCurrency(szocho)}</div>
         </div>
 
-        <div className="p-2 bg-red-50 rounded border border-red-200">
-          <div className="text-xs text-gray-600 mb-0.5">ÁFA (27% limit felett)</div>
-          <div className="text-sm font-bold text-red-700">{formatCurrency(afa)}</div>
+        <div className="p-2 bg-blue-50 rounded border border-blue-300">
+          <div className="text-xs text-slate-600 mb-0.5">ÁFA (27% limit felett)</div>
+          <div className="text-sm font-bold text-blue-700">{formatCurrency(afa)}</div>
         </div>
 
-        <div className="p-2 bg-indigo-50 rounded border border-indigo-200">
-          <div className="text-xs text-gray-600 mb-0.5">HIPA ({hipaKulcs}%)</div>
-          <div className="text-sm font-bold text-indigo-700">{formatCurrency(hipa)}</div>
+        <div className="p-2 bg-blue-50 rounded border border-blue-300">
+          <div className="text-xs text-slate-600 mb-0.5">HIPA ({hipaKulcs}%)</div>
+          <div className="text-sm font-bold text-blue-700">{formatCurrency(hipa)}</div>
         </div>
 
-        <div className="p-2 bg-teal-50 rounded border border-teal-200">
-          <div className="text-xs text-gray-600 mb-0.5">Kamarai hozzájárulás</div>
-          <div className="text-sm font-bold text-teal-700">{formatCurrency(KAMARAI_HOZZAJARULAS)}</div>
+        <div className="p-2 bg-blue-50 rounded border border-blue-300">
+          <div className="text-xs text-slate-600 mb-0.5">Kamarai hozzájárulás</div>
+          <div className="text-sm font-bold text-blue-700">{formatCurrency(KAMARAI_HOZZAJARULAS)}</div>
         </div>
 
         {showHiddenCosts && isTranzakcioEnabled && (
-          <div className="p-2 bg-gray-100 rounded border border-gray-300">
-            <div className="text-xs text-gray-600 mb-0.5">Tranzakciós illeték</div>
-            <div className="text-sm font-bold text-gray-700">{formatCurrency(tranzakcios_illetek)}</div>
+          <div className="p-2 bg-slate-50 rounded border border-slate-300">
+            <div className="text-xs text-slate-600 mb-0.5">Tranzakciós illeték</div>
+            <div className="text-sm font-bold text-slate-700">{formatCurrency(tranzakcios_illetek)}</div>
           </div>
         )}
         {showHiddenCosts && isKonyveloEnabled && (
-          <div className="p-2 bg-gray-100 rounded border border-gray-300">
-            <div className="text-xs text-gray-600 mb-0.5">Könyvelő ({13 - indulasHonap} hó)</div>
-            <div className="text-sm font-bold text-gray-700">{formatCurrency(konyvelo_koltseg)}</div>
+          <div className="p-2 bg-slate-50 rounded border border-slate-300">
+            <div className="text-xs text-slate-600 mb-0.5">Könyvelő ({13 - indulasHonap} hó)</div>
+            <div className="text-sm font-bold text-slate-700">{formatCurrency(konyvelo_koltseg)}</div>
           </div>
         )}
         {showHiddenCosts && isSzamlazoEnabled && (
-          <div className="p-2 bg-gray-100 rounded border border-gray-300">
-            <div className="text-xs text-gray-600 mb-0.5">Számlázó ({13 - indulasHonap} hó)</div>
-            <div className="text-sm font-bold text-gray-700">{formatCurrency(szamlazo_koltseg)}</div>
+          <div className="p-2 bg-slate-50 rounded border border-slate-300">
+            <div className="text-xs text-slate-600 mb-0.5">Számlázó ({13 - indulasHonap} hó)</div>
+            <div className="text-sm font-bold text-slate-700">{formatCurrency(szamlazo_koltseg)}</div>
           </div>
         )}
       </div>
@@ -901,28 +892,28 @@ export default function AtalanyadoDiagram() {
       {/* Negyedéves részletezés (ha aktív) */}
       {isNegyedeves && (
         <div className="mb-6 overflow-x-auto">
-          <table className="w-full text-sm text-left text-gray-500 border-collapse border border-gray-200 rounded-lg overflow-hidden">
-            <thead className="text-xs text-gray-700 uppercase bg-gray-100">
+          <table className="w-full text-sm text-left text-slate-500 border-collapse border border-slate-200 rounded-lg overflow-hidden">
+            <thead className="text-xs text-slate-700 uppercase bg-slate-100">
               <tr>
-                <th className="px-3 py-2 border border-gray-200">Időszak</th>
-                <th className="px-3 py-2 border border-gray-200">Bevétel</th>
-                <th className="px-3 py-2 border border-gray-200">SZJA</th>
-                <th className="px-3 py-2 border border-gray-200">TB</th>
-                <th className="px-3 py-2 border border-gray-200">SZOCHO</th>
-                <th className="px-3 py-2 border border-gray-200">ÁFA</th>
-                <th className="px-3 py-2 border border-gray-200 font-bold">Összesen</th>
+                <th className="px-3 py-2 border border-slate-200">Időszak</th>
+                <th className="px-3 py-2 border border-slate-200">Bevétel</th>
+                <th className="px-3 py-2 border border-slate-200">SZJA</th>
+                <th className="px-3 py-2 border border-slate-200">TB</th>
+                <th className="px-3 py-2 border border-slate-200">SZOCHO</th>
+                <th className="px-3 py-2 border border-slate-200">ÁFA</th>
+                <th className="px-3 py-2 border border-slate-200 font-bold">Összesen</th>
               </tr>
             </thead>
             <tbody>
               {negyedevesSzamitas.negyedek.map((n, i) => (
-                <tr key={i} className={n.honapok === 0 ? 'bg-gray-50 opacity-40' : 'bg-white hover:bg-blue-50'}>
-                  <td className="px-3 py-2 border border-gray-200 font-medium text-gray-900">{i + 1}. negyedév</td>
-                  <td className="px-3 py-2 border border-gray-200">{formatCurrency(n.bevetel)}</td>
-                  <td className="px-3 py-2 border border-gray-200 text-orange-600">{formatCurrency(n.szja)}</td>
-                  <td className="px-3 py-2 border border-gray-200 text-purple-600">{formatCurrency(n.tb_jarulék)}</td>
-                  <td className="px-3 py-2 border border-gray-200 text-pink-600">{formatCurrency(n.szocho)}</td>
-                  <td className="px-3 py-2 border border-gray-200 text-red-600">{formatCurrency(n.afa)}</td>
-                  <td className="px-3 py-2 border border-gray-200 font-bold text-gray-700">{formatCurrency(n.szja + n.tb_jarulék + n.szocho + n.afa + (n.tranzakcios_illetek || 0) + (n.konyvelo_koltseg || 0) + (n.szamlazo_koltseg || 0))}</td>
+                <tr key={i} className={n.honapok === 0 ? 'bg-slate-50 opacity-40' : 'bg-white hover:bg-blue-50'}>
+                  <td className="px-3 py-2 border border-slate-200 font-medium text-slate-900">{i + 1}. negyedév</td>
+                  <td className="px-3 py-2 border border-slate-200">{formatCurrency(n.bevetel)}</td>
+                  <td className="px-3 py-2 border border-slate-200 text-blue-600">{formatCurrency(n.szja)}</td>
+                  <td className="px-3 py-2 border border-slate-200 text-blue-600">{formatCurrency(n.tb_jarulék)}</td>
+                  <td className="px-3 py-2 border border-slate-200 text-blue-600">{formatCurrency(n.szocho)}</td>
+                  <td className="px-3 py-2 border border-slate-200 text-blue-600">{formatCurrency(n.afa)}</td>
+                  <td className="px-3 py-2 border border-slate-200 font-bold text-slate-700">{formatCurrency(n.szja + n.tb_jarulék + n.szocho + n.afa + (n.tranzakcios_illetek || 0) + (n.konyvelo_koltseg || 0) + (n.szamlazo_koltseg || 0))}</td>
                 </tr>
               ))}
             </tbody>
@@ -934,34 +925,34 @@ export default function AtalanyadoDiagram() {
       {showHiddenCosts && (
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
           {isTranzakcioEnabled && (
-            <div className="p-3 bg-gray-50 rounded border border-gray-200 flex justify-between items-center">
+            <div className="p-3 bg-slate-50 rounded border border-slate-300 flex justify-between items-center">
               <div>
-                <div className="text-xs text-gray-600 font-semibold uppercase tracking-wider">Tranzakciós illeték (0.45%)</div>
-                <div className="text-lg font-bold text-gray-800">{formatCurrency(tranzakcios_illetek)}</div>
+                <div className="text-xs text-slate-600 font-semibold uppercase tracking-wider">Tranzakciós illeték (0.45%)</div>
+                <div className="text-lg font-bold text-slate-800">{formatCurrency(tranzakcios_illetek)}</div>
               </div>
-              <div className="text-right text-[10px] text-gray-500 italic max-w-[100px]">
+              <div className="text-right text-[10px] text-slate-500 italic max-w-[100px]">
                 Banki tranzakciós költség
               </div>
             </div>
           )}
           {isKonyveloEnabled && (
-            <div className="p-3 bg-gray-50 rounded border border-gray-200 flex justify-between items-center">
+            <div className="p-3 bg-slate-50 rounded border border-slate-300 flex justify-between items-center">
               <div>
-                <div className="text-xs text-gray-600 font-semibold uppercase tracking-wider">Könyvelő díja ({13 - indulasHonap} hó)</div>
-                <div className="text-lg font-bold text-gray-800">{formatCurrency(konyvelo_koltseg)}</div>
+                <div className="text-xs text-slate-600 font-semibold uppercase tracking-wider">Könyvelő díja ({13 - indulasHonap} hó)</div>
+                <div className="text-lg font-bold text-slate-800">{formatCurrency(konyvelo_koltseg)}</div>
               </div>
-              <div className="text-right text-[10px] text-gray-500 italic max-w-[100px]">
+              <div className="text-right text-[10px] text-slate-500 italic max-w-[100px]">
                 {formatCurrency(konyveloHaviDij)}/hó
               </div>
             </div>
           )}
           {isSzamlazoEnabled && (
-            <div className="p-3 bg-gray-50 rounded border border-gray-200 flex justify-between items-center">
+            <div className="p-3 bg-slate-50 rounded border border-slate-300 flex justify-between items-center">
               <div>
-                <div className="text-xs text-gray-600 font-semibold uppercase tracking-wider">Számlázó ({13 - indulasHonap} hó)</div>
-                <div className="text-lg font-bold text-gray-800">{formatCurrency(szamlazo_koltseg)}</div>
+                <div className="text-xs text-slate-600 font-semibold uppercase tracking-wider">Számlázó ({13 - indulasHonap} hó)</div>
+                <div className="text-lg font-bold text-slate-800">{formatCurrency(szamlazo_koltseg)}</div>
               </div>
-              <div className="text-right text-[10px] text-gray-500 italic max-w-[100px]">
+              <div className="text-right text-[10px] text-slate-500 italic max-w-[100px]">
                 {formatCurrency(szamlazoHaviDij)}/hó
               </div>
             </div>
@@ -971,29 +962,29 @@ export default function AtalanyadoDiagram() {
 
       {/* Összesítés */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
-        <div className="p-4 bg-green-50 rounded border-2 border-green-200">
-          <div className="text-sm text-gray-600 mb-0.5">Jövedelem ({100 - koltseg_hanyad}%)</div>
-          <div className="text-2xl font-bold text-green-700">{formatCurrency(jovedelem)}</div>
+        <div className="p-4 bg-emerald-50 rounded border-2 border-emerald-300">
+          <div className="text-sm text-slate-600 mb-0.5">Jövedelem ({100 - koltseg_hanyad}%)</div>
+          <div className="text-2xl font-bold text-emerald-700">{formatCurrency(jovedelem)}</div>
         </div>
         
-        <div className="p-4 bg-yellow-50 rounded border-2 border-yellow-200">
-          <div className="text-sm text-gray-600 mb-0.5">SZJA mentes jövedelem keret</div>
-          <div className="text-2xl font-bold text-yellow-700">
+        <div className="p-4 bg-sky-50 rounded border-2 border-sky-300">
+          <div className="text-sm text-slate-600 mb-0.5">SZJA mentes jövedelem keret</div>
+          <div className="text-2xl font-bold text-sky-700">
             {isSzjaMentes ? '∞' : formatCurrency(ADÓMENTES_JÖVEDELEM)}
           </div>
         </div>
 
-        <div className="col-span-2 sm:col-span-2 p-4 bg-red-50 rounded border-2 border-red-300">
+        <div className="col-span-2 sm:col-span-2 p-4 bg-rose-50 rounded border-2 border-rose-300">
           <div className="flex justify-between items-center">
             <div>
-              <div className="text-sm text-gray-600 mb-0.5">
+              <div className="text-sm text-slate-600 mb-0.5">
                 {showHiddenCosts ? 'Összes adó, járulék és költség' : 'Összes adó és járulék'}
               </div>
-              <div className="text-2xl font-bold text-red-700">{formatCurrency(osszes_ado)}</div>
+              <div className="text-2xl font-bold text-rose-700">{formatCurrency(osszes_ado)}</div>
             </div>
             <div className="text-right">
-              <div className="text-sm text-gray-600 mb-0.5">A bevétel %-ában</div>
-              <div className="text-3xl font-bold text-red-700">{ado_szazalek.toFixed(2)}%</div>
+              <div className="text-sm text-slate-600 mb-0.5">A bevétel %-ában</div>
+              <div className="text-3xl font-bold text-rose-700">{ado_szazalek.toFixed(2)}%</div>
             </div>
           </div>
         </div>
@@ -1054,9 +1045,9 @@ export default function AtalanyadoDiagram() {
       </div>
 
       {/* Magyarázat */}
-      <div className="bg-gray-50 p-6 rounded-lg">
-        <h3 className="text-lg font-semibold mb-3 text-gray-800">Fontos tudnivalók {ev}</h3>
-        <div className="space-y-2 text-sm text-gray-700">
+      <div className="bg-slate-50 p-6 rounded-lg border border-slate-200">
+        <h3 className="text-lg font-semibold mb-3 text-slate-800">Fontos tudnivalók {ev}</h3>
+        <div className="space-y-2 text-sm text-slate-700">
           <p><strong>📊 Aktuális beállítások ({ev}):</strong></p>
           <ul className="ml-4 space-y-1 bg-blue-50 p-3 rounded border-l-4 border-blue-500">
             <li>• <strong>Minimálbér:</strong> {formatCurrency(MINIMÁLBÉR)}/hó</li>
@@ -1102,14 +1093,14 @@ export default function AtalanyadoDiagram() {
           </ul>
 
           <p className="mt-3"><strong>Közösségi (EU) és Külföldi értékesítés:</strong></p>
-          <ul className="ml-4 space-y-1 bg-yellow-50 p-3 rounded border-l-4 border-yellow-500">
+          <ul className="ml-4 space-y-1 bg-amber-50 p-3 rounded border-l-4 border-amber-500">
             <li>• <strong>B2B szolgáltatás:</strong> Ha EU-s vagy külföldi cégnek számlázol, általában <strong>fordított adózás</strong> történik (0% magyar ÁFA).</li>
             <li>• <strong>ÁFA-mentes keret:</strong> Az export bevétel (ahol a teljesítés helye külföld) <strong>NEM számít bele</strong> az alanyi adómentes keretbe!</li>
             <li>• <strong>Példa:</strong> Ha 30M Ft a bevételed, de ebből 15M Ft EU-s B2B szolgáltatás, akkor a belföldi 15M Ft még nem lépi át a 18M/20M Ft-os keretet, így minden számlád ÁFA-mentes marad.</li>
           </ul>
 
           <p className="mt-3"><strong>Hogyan számol a kalkulátor az ÁFA-val?</strong></p>
-          <ul className="ml-4 space-y-1 bg-red-50 p-3 rounded border-l-4 border-red-500">
+          <ul className="ml-4 space-y-1 bg-rose-50 p-3 rounded border-l-4 border-rose-500">
             <li>• <strong>Számítás:</strong> Ha a belföldi bevételed átlépi a limitet, a rendszer a <strong>keret feletti belföldi részre</strong> számol 27% ÁFA-t adóteherként.</li>
           </ul>
         </div>

@@ -203,8 +203,12 @@ export default function AtalanyadoDiagram() {
           const tb_alap_eddig = Math.max(adokot_jov_eddig, min_tb_eddig);
           const szoc_alap_eddig = Math.max(adokot_jov_eddig, min_szoc_eddig);
           
-          tb_alap_negyedev = tb_alap_eddig - elozo_tb_alap;
-          szoc_alap_negyedev = szoc_alap_eddig - elozo_szoc_alap;
+          const min_tb_negyedev = alkalmazott_minimalber * honapok;
+          const min_szoc_negyedev = alkalmazott_minimalber * szocho_szorzo * honapok;
+
+          tb_alap_negyedev = Math.max(tb_alap_eddig - elozo_tb_alap, min_tb_negyedev);
+          szoc_alap_negyedev = Math.max(szoc_alap_eddig - elozo_szoc_alap, min_szoc_negyedev);
+
           
           // Havi szintű kerekítés a negyedéven belül
           const tb_havi = Math.round((tb_alap_negyedev / honapok) * 0.185);

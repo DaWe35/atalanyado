@@ -20,20 +20,32 @@ export default function AtalanyadoDiagram() {
   const [ev, setEv] = useState(jelenlegiEv); // 2025, 2026, 2027
   const [koltseg_hanyad, setKoltsegHanyad] = useState(jelenlegiEvKoltsegHanyad);
   
-  // Elérhető költséghányadok év szerint
+  // 2027-ben a hatályos általános hányad 50%, a 45% a T/927. javaslat szerint választható.
   const getKoltsegHanyadok = (ev) => {
-    const evSzerinti = ev === 2025 ? 40 : (ev === 2026 ? 45 : 50);
-    return [evSzerinti, 80, 90];
+    if (ev === 2025) return [40, 80, 90];
+    if (ev === 2026) return [45, 80, 90];
+    return [50, 45, 80, 90];
+  };
+
+  const alapKoltsegHanyad = (ev) => (ev === 2025 ? 40 : ev === 2026 ? 45 : 50);
+
+  const koltsegHanyadLabel = (hanyad) => {
+    if (hanyad === 80) return '80% (szolg.)';
+    if (hanyad === 90) return '90% (kisker.)';
+    if (ev === 2027 && hanyad === 50) return '50% (hatályos)';
+    if (ev === 2027 && hanyad === 45) return '45% (javaslat)';
+    return `${hanyad}%`;
   };
   
-  // Amikor az év változik, ellenőrizzük, hogy a jelenlegi költséghányad elérhető-e
+  // Évváltáskor az általános hányad a hatályos kulcsra áll. A 80% és a 90% megmarad.
   useEffect(() => {
-    const elerhetoKoltsegHanyadok = getKoltsegHanyadok(ev);
-    if (!elerhetoKoltsegHanyadok.includes(koltseg_hanyad)) {
-      // Ha nem elérhető, állítsuk be az adott év alapértelmezett értékét
-      const evSzerinti = ev === 2025 ? 40 : (ev === 2026 ? 45 : 50);
-      setKoltsegHanyad(evSzerinti);
+    const alap = alapKoltsegHanyad(ev);
+    const altalanos = koltseg_hanyad === 40 || koltseg_hanyad === 45 || koltseg_hanyad === 50;
+    if (altalanos) {
+      if (koltseg_hanyad !== alap) setKoltsegHanyad(alap);
+      return;
     }
+    if (!getKoltsegHanyadok(ev).includes(koltseg_hanyad)) setKoltsegHanyad(alap);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ev]);
   const [indulasHonap, setIndulasHonap] = useState(1); // 1-12
@@ -55,17 +67,13 @@ export default function AtalanyadoDiagram() {
   // Minimálbér és garantált bérminimum értékek évenként (konstansok)
   const MINIMÁLBÉR_2025 = 290800;
   const MINIMÁLBÉR_2026 = 322800;
-  const MINIMÁLBÉR_2027 = 374600; // nem végleges
+  // 2026. november 19-i bérmegállapodás. A rendelet még nincs kihirdetve.
+  const MINIMÁLBÉR_2027 = 347000;
   
   const GARANTÁLT_BÉRMINIMUM_2025 = 348800;
   const GARANTÁLT_BÉRMINIMUM_2026 = 373200;
-  const GARANTÁLT_BÉRMINIMUM_2027 = 449500; // nem végleges
-  
-  // Bevételi limitek évenként (konstansok)
-  const MAX_BEVETEL_2025_40 = 34896000;
-  const MAX_BEVETEL_2026_45 = 38736000;
-  const MAX_BEVETEL_2027_50 = 38736000; // nem végleges
-  const MAX_BEVETEL_90 = 193680000;
+  // 2026. november 19-i bérmegállapodás. A rendelet még nincs kihirdetve.
+  const GARANTÁLT_BÉRMINIMUM_2027 = 396000;
 
   // ÁFA alanyi adómentes keret évenként
   const AFA_LIMIT_2025 = 18000000;
@@ -98,20 +106,13 @@ export default function AtalanyadoDiagram() {
     [jogviszony, GARANTÁLT_BÉRMINIMUM, MINIMÁLBÉR]
   );
   
-  const MAX_BEVETEL_80 = useMemo(() => 
-    ev === 2025 ? 34896000 : 38736000, // 80% költséghányad: 2025-ben 40%-os limit, 2026-tól 45%-os limit
-    [ev]
-  );
-  
-  // Bevételi limit meghatározása év és költséghányad alapján
+  // Szja tv.: éves minimálbér tízszerese, kizárólagos kiskereskedelemnél ötvenszerese.
   const MAX_BEVETEL = useMemo(() => 
-    koltseg_hanyad === 90 ? MAX_BEVETEL_90 : 
-    (koltseg_hanyad === 80 ? MAX_BEVETEL_80 :
-    (koltseg_hanyad === 50 ? (ev >= 2027 ? MAX_BEVETEL_2027_50 : MAX_BEVETEL_2026_45) :
-    (koltseg_hanyad === 45 ? (ev >= 2026 ? MAX_BEVETEL_2026_45 : MAX_BEVETEL_2025_40) :
-    (koltseg_hanyad === 40 ? MAX_BEVETEL_2025_40 : MAX_BEVETEL_2026_45)))),
-    [koltseg_hanyad, ev, MAX_BEVETEL_80]
+    ÉVES_MINIMÁLBÉR * (koltseg_hanyad === 90 ? 50 : 10),
+    [ÉVES_MINIMÁLBÉR, koltseg_hanyad]
   );
+
+  const AFA_LIMIT = ev === 2025 ? AFA_LIMIT_2025 : (ev === 2026 ? AFA_LIMIT_2026 : AFA_LIMIT_2027);
   
   // Napok számítása indulási hónaptól év végéig
   const { mukodesiNapok, aranyositoTenyezo } = useMemo(() => {
@@ -132,9 +133,8 @@ export default function AtalanyadoDiagram() {
   );
 
   const aranyositott_afa_limit = useMemo(() => {
-    const limit = ev === 2025 ? AFA_LIMIT_2025 : (ev === 2026 ? AFA_LIMIT_2026 : AFA_LIMIT_2027);
-    return limit * aranyositoTenyezo;
-  }, [ev, aranyositoTenyezo]);
+    return AFA_LIMIT * aranyositoTenyezo;
+  }, [AFA_LIMIT, aranyositoTenyezo]);
 
   // Hónapok száma negyedévenként az indulási hónap függvényében
   const honapokNegyedenkent = useMemo(() => {
@@ -302,13 +302,19 @@ export default function AtalanyadoDiagram() {
         szoc_val = szoc_havi * activeMonths;
       }
       
-      let egyszerusitett_hipa = Infinity;
-      if (bev <= 12000000) egyszerusitett_hipa = 2500000 * (hipaKulcs / 100);
-      else if (bev <= 18000000) egyszerusitett_hipa = 6000000 * (hipaKulcs / 100);
-      else if (bev <= 25000000) egyszerusitett_hipa = 8500000 * (hipaKulcs / 100);
-      else if (koltseg_hanyad === 90 && bev <= 120000000) egyszerusitett_hipa = 8500000 * (hipaKulcs / 100);
-      
-      const hipa_val = Math.round(Math.min(egyszerusitett_hipa, bev * (hipaKulcs / 100)));
+      // Htv. 39/A. §: a sávot az évesített bevétel dönti el, rövidebb adóévben az adóalap napi arányos.
+      const evesitettBevetel = aranyositoTenyezo > 0 ? bev / aranyositoTenyezo : bev;
+      const savosPlafon = koltseg_hanyad === 90 ? 120000000 : 25000000;
+      let savosAlapEves = null;
+      if (evesitettBevetel <= savosPlafon) {
+        if (evesitettBevetel <= 12000000) savosAlapEves = 2500000;
+        else if (evesitettBevetel <= 18000000) savosAlapEves = 6000000;
+        else savosAlapEves = 8500000;
+      }
+      const savosHipa = savosAlapEves == null ? Infinity : savosAlapEves * aranyositoTenyezo * (hipaKulcs / 100);
+      // A sáv felett az általános módszer jár. Tételes költség híján a teljes bevétel a felső becslés.
+      const altalanosHipa = bev * (hipaKulcs / 100);
+      const hipa_val = Math.round(Math.min(savosHipa, altalanosHipa));
       
       const belfoldi_bev = Math.max(0, bev - kulfoldi_bev);
       const afa_val = belfoldi_bev > aranyositott_afa_limit ? Math.round((belfoldi_bev - aranyositott_afa_limit) * 0.27) : 0;
@@ -505,7 +511,7 @@ export default function AtalanyadoDiagram() {
           >
             {getKoltsegHanyadok(ev).map((hanyad) => (
               <option key={hanyad} value={hanyad}>
-                {hanyad === 80 ? '80% (szolg.)' : hanyad === 90 ? '90% (kisker.)' : `${hanyad}%`}
+                {koltsegHanyadLabel(hanyad)}
               </option>
             ))}
           </select>
@@ -648,7 +654,7 @@ export default function AtalanyadoDiagram() {
 
       {ev === 2027 && (
         <p className="text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded p-3 mb-6">
-          ⚠️ <strong>Figyelem:</strong> A 2027-es minimálbér nem végleges, ezért a számítások nem lehetnek pontosak.
+          ⚠️ <strong>Figyelem:</strong> A 2027-es minimálbér (347 000 Ft) és a garantált bérminimum (396 000 Ft) a 2026. november 19-i megállapodás szerinti összeg, a rendelet még nincs kihirdetve. Az adómentes keret és a bevételi plafon ebből számol. Az általános költséghányad a hatályos törvény szerint 50%. A T/927. javaslat 45%-on tartaná; ez a költséghányad listában a „45% (javaslat)” sor.
         </p>
       )}
 
@@ -669,7 +675,7 @@ export default function AtalanyadoDiagram() {
             <span className="font-bold text-amber-700"> {formatCurrency(aranyositott_afa_limit)}</span>
           </div>
           <p className="text-slate-600 mt-0.5">
-            {mukodesiNapok} nap ({honapNevek[indulasHonap - 1]}–Dec) • Max: {formatCurrency(ev === 2025 ? AFA_LIMIT_2025 : (ev === 2026 ? AFA_LIMIT_2026 : AFA_LIMIT_2027))}
+            {mukodesiNapok} nap ({honapNevek[indulasHonap - 1]}–Dec) • Max: {formatCurrency(AFA_LIMIT)}
           </p>
           {/* <p className="text-slate-600 mt-0.5">
           Belföldi (ÁFA-számító) bevétel: {formatCurrency(Math.max(0, eves_bevetel - kulfoldi_bev_osszeg))}
@@ -1053,7 +1059,7 @@ export default function AtalanyadoDiagram() {
             <li>• <strong>Minimálbér:</strong> {formatCurrency(MINIMÁLBÉR)}/hó</li>
             <li>• <strong>Garantált bérminimum:</strong> {formatCurrency(GARANTÁLT_BÉRMINIMUM)}/hó</li>
             <li>• <strong>Adómentes keret:</strong> {formatCurrency(ADÓMENTES_JÖVEDELEM)} (éves minimálbér 50%-a, nem arányosítjuk év közbeni indulás esetén sem)</li>
-            <li>• <strong>ÁFA-mentes keret:</strong> {formatCurrency(ev === 2025 ? AFA_LIMIT_2025 : (ev === 2026 ? AFA_LIMIT_2026 : AFA_LIMIT_2027))} (arányosítva: {formatCurrency(aranyositott_afa_limit)})</li>
+            <li>• <strong>ÁFA-mentes keret:</strong> {formatCurrency(AFA_LIMIT)} (arányosítva: {formatCurrency(aranyositott_afa_limit)})</li>
             <li>• <strong>Bevételi limit ({koltseg_hanyad}%):</strong> {formatCurrency(MAX_BEVETEL)}/év</li>
             <li>• <strong>SZOCHO minimum:</strong> {ev === 2025 ? '112,5%' : '100%'} ({ev === 2025 ? '2025-ben még 112,5%-os szorzó' : '2026-tól megszűnt a 112,5%-os szorzó'})</li>
           </ul>
@@ -1068,35 +1074,34 @@ export default function AtalanyadoDiagram() {
           
           <p className="mt-3"><strong>Költséghányad értékek:</strong></p>
           <ul className="ml-4 space-y-1">
-            <li>• <strong>40%:</strong> Általános szolgáltatások (2025)</li>
-            <li>• <strong>45%:</strong> Általános szolgáltatások (2026)</li>
-            <li>• <strong>50%:</strong> Általános szolgáltatások (2027-től)</li>
-            <li>• <strong>80%:</strong> Speciális szolgáltatások (javítás, személyszállítás stb.) - limit függ az évtől</li>
-            <li>• <strong>90%:</strong> Kiskereskedelem (csak árueladás)</li>
+            <li>• <strong>40%:</strong> Általános tevékenységek (2025)</li>
+            <li>• <strong>45%:</strong> Általános tevékenységek (2026)</li>
+            <li>• <strong>50%:</strong> Általános tevékenységek a hatályos törvény szerint 2027-től. Ugyanebben az évben a „45% (javaslat)” a T/927. szerinti számítás, még nincs kihirdetve.</li>
+            <li>• <strong>80%:</strong> A törvényben felsorolt tevékenységek (javítás, személyszállítás stb.)</li>
+            <li>• <strong>90%:</strong> Kizárólag kiskereskedelem</li>
           </ul>
           
           <p className="mt-3"><strong>Bevételi korlátok évenként:</strong></p>
           <ul className="ml-4 space-y-1">
-            <li>• <strong>2025:</strong> Átalányadó = 34 896 000 Ft, ÁFA-mentes = 18 000 000 Ft</li>
-            <li>• <strong>2026:</strong> Átalányadó = 38 736 000 Ft, ÁFA-mentes = 20 000 000 Ft</li>
-            <li>• <strong>2027:</strong> Átalányadó = 38 736 000 Ft, ÁFA-mentes = 22 000 000 Ft</li>
-            <li>• <strong>Minden év:</strong> 90% (kisker) átalányadó limit = 193 680 000 Ft</li>
-            <li>• Év közben indulásnál napra arányosítva!</li>
+            <li>• <strong>2025:</strong> Átalányadó = {formatCurrency(MINIMÁLBÉR_2025 * 12 * 10)}, kisker = {formatCurrency(MINIMÁLBÉR_2025 * 12 * 50)}, ÁFA-mentes = {formatCurrency(AFA_LIMIT_2025)}</li>
+            <li>• <strong>2026:</strong> Átalányadó = {formatCurrency(MINIMÁLBÉR_2026 * 12 * 10)}, kisker = {formatCurrency(MINIMÁLBÉR_2026 * 12 * 50)}, ÁFA-mentes = {formatCurrency(AFA_LIMIT_2026)}</li>
+            <li>• <strong>2027:</strong> Átalányadó = {formatCurrency(MINIMÁLBÉR_2027 * 12 * 10)}, kisker = {formatCurrency(MINIMÁLBÉR_2027 * 12 * 50)}, ÁFA-mentes = {formatCurrency(AFA_LIMIT_2027)}. A forintösszeg a még ki nem hirdetett minimálbért követi.</li>
+            <li>• A 80%-os költséghányadhoz is az általános (tízszeres) plafon tartozik. Év közben indulásnál a plafon napra arányos.</li>
           </ul>
           
           <p className="mt-3"><strong>HIPA (iparűzési adó):</strong></p>
           <ul className="ml-4 space-y-1">
             <li>• Az adómérték településenként változhat (max. 2%)</li>
-            <li>• Egyszerűsített sávos módszer is alkalmazható 25M Ft-ig (kisker. 120M Ft-ig)</li>
-            <li>• 0-12M: {formatCurrency(2500000 * (hipaKulcs / 100))} ({hipaKulcs}%), 12-18M: {formatCurrency(6000000 * (hipaKulcs / 100))} ({hipaKulcs}%), 18-25M: {formatCurrency(8500000 * (hipaKulcs / 100))} ({hipaKulcs}%)</li>
-            <li>• 25M Ft felett: ({hipaKulcs}%), melyből tételes költség levonható. A kalkulátor 2.5M Ft alatt is ezt a módszert alkalmazza, mert előnyösebb.</li>
+            <li>• Sávos adóalap évesített bevétel szerint: 12M Ft-ig 2,5M, 18M-ig 6M, 25M-ig 8,5M Ft. Kizárólagos kiskereskedelemnél a sáv 120M Ft-ig tart, 8,5M Ft adóalappal.</li>
+            <li>• Teljes évre, {hipaKulcs}%-kal: 0–12M {formatCurrency(2500000 * (hipaKulcs / 100))}, 12–18M {formatCurrency(6000000 * (hipaKulcs / 100))}, 18–25M {formatCurrency(8500000 * (hipaKulcs / 100))}.</li>
+            <li>• Év közbeni indulásnál a sávhatár és az adóalap is napi arányos. A sáv felett, illetve ha az olcsóbb, a kalkulátor a teljes bevételre veti a kulcsot, mert a tételesen levonható költségeket nem ismeri.</li>
           </ul>
 
           <p className="mt-3"><strong>Közösségi (EU) és Külföldi értékesítés:</strong></p>
           <ul className="ml-4 space-y-1 bg-amber-50 p-3 rounded border-l-4 border-amber-500">
             <li>• <strong>B2B szolgáltatás:</strong> Ha EU-s vagy külföldi cégnek számlázol, általában <strong>fordított adózás</strong> történik (0% magyar ÁFA).</li>
             <li>• <strong>ÁFA-mentes keret:</strong> Az export bevétel (ahol a teljesítés helye külföld) <strong>NEM számít bele</strong> az alanyi adómentes keretbe!</li>
-            <li>• <strong>Példa:</strong> Ha 30M Ft a bevételed, de ebből 15M Ft EU-s B2B szolgáltatás, akkor a belföldi 15M Ft még nem lépi át a 18M/20M Ft-os keretet, így minden számlád ÁFA-mentes marad.</li>
+            <li>• <strong>Példa:</strong> Ha 30M Ft a bevételed, de ebből 15M Ft EU-s B2B szolgáltatás, akkor a belföldi 15M Ft még nem lépi át a {formatCurrency(AFA_LIMIT)}-os keretet, így minden számlád ÁFA-mentes marad.</li>
           </ul>
 
           <p className="mt-3"><strong>Hogyan számol a kalkulátor az ÁFA-val?</strong></p>

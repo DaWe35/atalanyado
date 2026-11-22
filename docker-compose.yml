@@ -6,7 +6,7 @@ services:
       context: .
       dockerfile: Dockerfile
     ports:
-      - "${PORT:-3000}:80"
+      - "${BIND_IP:-127.0.0.1}:${PORT:-3000}:80"
     container_name: atalanyado-app
     restart: unless-stopped
 
